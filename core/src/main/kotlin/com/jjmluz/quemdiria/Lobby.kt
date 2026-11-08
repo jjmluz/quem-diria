@@ -56,6 +56,8 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS) {
     private var game: Game? = null
     private val random = SecureRandom()
 
+    /** The last stage number of any game here, so the next game's numbers carry on from it. */
+    private var lastSerial = 0
     private val _room = MutableStateFlow(Room(emptyList(), Phase.LOBBY))
     val room: StateFlow<Room> = _room.asStateFlow()
 
@@ -131,7 +133,9 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS) {
     fun start(deck: Deck, now: Long, random: Random = Random.Default): Boolean {
         if (!_room.value.canStart) return false
         val ids = seats.map { it.player.id }
-        game = Game.start(Game.plan(ids, deck, random), now, ids.toSet(), seed = random.nextLong())
+        // Numbered on from the last game: phones keep each drawing they load by its stage's number, so
+        // starting again from 0 showed them an earlier game's drawings.
+        game = Game.start(Game.plan(ids, deck, random), now, ids.toSet(), seed = random.nextLong(), serial = lastSerial)
         phase = Phase.GAME
         publish()
         return true
@@ -204,6 +208,7 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS) {
         seats.any { it !== except && it.player.name.equals(name, ignoreCase = true) }
 
     private fun publish() {
+        game?.let { lastSerial = it.serial }
         _room.value = Room(seats.map { it.player }, phase, mode, game)
     }
 

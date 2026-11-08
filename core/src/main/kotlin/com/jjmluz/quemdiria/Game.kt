@@ -40,7 +40,10 @@ data class Game(
     val stage: Stage,
     /** When the stage ends by itself; 0 for the end screen, which waits for OK. */
     val deadline: Long,
-    /** Goes up with every stage, so phones can tell a new stage from an update to the same one. */
+    /**
+     * Goes up with every stage, so phones can tell a new stage from an update to the same one. It names
+     * the drawings' addresses too, which phones keep, so it never starts again: see [start].
+     */
     val serial: Int = 0,
     val scores: Map<Int, Int> = emptyMap(),
     /** Points each player got at the last reveal. */
@@ -268,7 +271,8 @@ data class Game(
             return steps
         }
 
-        fun start(steps: List<Step>, now: Long, present: Set<Int>, seed: Long = now): Game =
-            Game(steps, -1, Stage.VOTE, 0, serial = 0, seed = seed).enter(0, now, present)
+        /** A new game, whose stages are numbered after [serial] (the last game's last one). */
+        fun start(steps: List<Step>, now: Long, present: Set<Int>, seed: Long = now, serial: Int = 0): Game =
+            Game(steps, -1, Stage.VOTE, 0, serial = serial, seed = seed).enter(0, now, present)
     }
 }

@@ -95,6 +95,19 @@ class LobbyTest {
     )
 
     @Test
+    fun aNewGameNumbersItsStagesAfterTheLastGame() {
+        // Phones keep each drawing by its stage's number: a number used again would show an old drawing.
+        val lobby = Lobby()
+        listOf("Ana", "Rui", "Eva").forEach { lobby.joined(it) }
+        lobby.start(deck, now = 0)
+        repeat(4) { lobby.skip(now = 0) }
+        val last = lobby.room.value.game!!.serial
+        lobby.backToLobby()
+        lobby.start(deck, now = 0)
+        assertTrue(lobby.room.value.game!!.serial > last)
+    }
+
+    @Test
     fun theGameStartsWithEnoughPlayersAndThenNobodyJoins() {
         val lobby = Lobby()
         lobby.joined("Ana")

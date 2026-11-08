@@ -72,6 +72,11 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     private val narrator = Narrator(app, language)
     private val sounds = Sounds()
     private val music = TitleMusic(app, viewModelScope)
+
+    private val _splash = MutableStateFlow(true)
+    /** The splash screen shows when the app opens, until it ends or OK skips it. */
+    val splash: StateFlow<Boolean> = _splash.asStateFlow()
+    private var splashStarted = false
     /** Whether the app is on screen: the music stops when the TV goes elsewhere. */
     private var foreground = false
 
@@ -161,11 +166,31 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         updateMusic()
     }
 
-    /** Music in the room only: the game has the narrator and its own sounds. */
-    private fun updateMusic() = music.play(foreground && room.value.phase == Phase.LOBBY)
+    /** The splash's first frame is on screen: its sound starts with it, once per launch. */
+    fun onSplashStart() {
+        if (splashStarted) return
+        splashStarted = true
+        sounds.play(Sounds.Kind.SPLASH)
+    }
+
+    /** The splash ran its course (or OK skipped it): on to the room and its music. */
+    fun endSplash() {
+        if (!_splash.value) return
+        _splash.value = false
+        updateMusic()
+    }
+
+    /** Music in the room only, after the splash: the game has the narrator and its own sounds. */
+    private fun updateMusic() = music.play(foreground && !_splash.value && room.value.phase == Phase.LOBBY)
 
     /** What the remote's keys do. Returns true for a key it used. */
     fun onKeyDown(keyCode: Int): Boolean {
+        if (_splash.value) {
+            // Any key skips the splash, its sound too, and does nothing else.
+            sounds.stop(Sounds.Kind.SPLASH)
+            endSplash()
+            return true
+        }
         val room = room.value
         val ok = keyCode in OK_KEYS
         val back = keyCode == KeyEvent.KEYCODE_BACK

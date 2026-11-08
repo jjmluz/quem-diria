@@ -74,9 +74,12 @@ fun QuemDiriaApp(viewModel: RoomViewModel) {
     val button by viewModel.button.collectAsStateWithLifecycle()
     val narrator by viewModel.narratorOn.collectAsStateWithLifecycle()
     val paused by viewModel.paused.collectAsStateWithLifecycle()
+    val splash by viewModel.splash.collectAsStateWithLifecycle()
     Box(Modifier.fillMaxSize().background(Background)) {
         val game = room.game
-        if (room.phase == Phase.GAME && game != null) {
+        if (splash) {
+            SplashScreen(onStart = viewModel::onSplashStart, onEnd = viewModel::endSplash)
+        } else if (room.phase == Phase.GAME && game != null) {
             GameScreen(room, game)
             paused?.let { PauseOverlay(it, invite) }
         } else {

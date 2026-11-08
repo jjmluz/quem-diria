@@ -30,10 +30,12 @@ import java.util.concurrent.Executors
  * guessing the address. Everything after that uses the player's token.
  *
  * @param asset the bytes of a file of the phone page (`index.html`, `app.js`...), or null if there's none.
+ * @param log where each request and refused connection is reported, for finding out what a phone sent.
  */
 class WebServer(
     private val lobby: Lobby,
     val code: String = newCode(),
+    private val log: (String) -> Unit = {},
     private val asset: (String) -> ByteArray?,
 ) {
     private var server: ServerSocket? = null
@@ -60,7 +62,10 @@ class WebServer(
                 clients += client
                 threads.execute {
                     try {
-                        client.use(::handle)
+                        client.use {
+                            handle(it)
+                            closeGently(it)
+                        }
                     } finally {
                         clients -= client
                     }
@@ -98,8 +103,20 @@ class WebServer(
     private fun handle(socket: Socket) {
         socket.soTimeout = 15_000
         val out = socket.getOutputStream()
+        val input = BufferedInputStream(socket.getInputStream())
+        val from = socket.inetAddress?.hostAddress
         val request = try {
-            readRequest(BufferedInputStream(socket.getInputStream()))
+            // Phone browsers often try https:// first (Chrome's "Always use secure connections"). Waiting for
+            // an HTTP request line that never comes made Chrome retry until it failed with
+            // ERR_TOO_MANY_RETRIES. Closing at once on a TLS handshake (it starts with byte 0x16) makes it
+            // fall back to http:// straight away.
+            input.mark(1)
+            when (input.read()) {
+                -1 -> return
+                TLS_HANDSHAKE -> return log("$from: https attempt, closed")
+                else -> input.reset()
+            }
+            readRequest(input)
         } catch (e: TooLarge) {
             return respond(out, 413, "{\"error\":\"too_large\"}")
         } catch (e: IOException) {
@@ -107,6 +124,7 @@ class WebServer(
         } catch (e: RuntimeException) {
             return respond(out, 400, "")
         }
+        log("$from: ${request.method} ${request.path} (${request.userAgent.take(120)})")
         val token = request.query["t"].orEmpty()
         when {
             request.method == "GET" && request.path == "/api/events" -> {
@@ -234,9 +252,38 @@ class WebServer(
         }
     }
 
+    /**
+     * Ends a finished connection without a reset: says we're done sending, then reads whatever the phone
+     * still sends before closing. Closing with unread bytes waiting makes the system send a reset, which
+     * can cut off the response the phone hasn't read yet.
+     */
+    private fun closeGently(socket: Socket) {
+        if (socket.isClosed) return
+        try {
+            socket.shutdownOutput()
+            socket.soTimeout = 1000
+            val input = socket.getInputStream()
+            val buffer = ByteArray(8192)
+            var total = 0
+            while (total < MAX_DRAIN) {
+                val n = input.read(buffer)
+                if (n < 0) break
+                total += n
+            }
+        } catch (e: IOException) {
+            // Timed out or already gone: close anyway.
+        }
+    }
+
     private class TooLarge : IOException()
 
-    private class Request(val method: String, val path: String, val query: Map<String, String>, val body: ByteArray) {
+    private class Request(
+        val method: String,
+        val path: String,
+        val query: Map<String, String>,
+        val userAgent: String,
+        val body: ByteArray,
+    ) {
         fun form(): Map<String, String> = parseQuery(String(body, Charsets.UTF_8))
     }
 
@@ -261,13 +308,18 @@ class WebServer(
             if (n < 0) throw IOException("body cut short")
             read += n
         }
-        return Request(method, target.substringBefore('?'), parseQuery(target.substringAfter('?', "")), body)
+        val userAgent = lines.firstNotNullOfOrNull { line ->
+            line.takeIf { it.startsWith("User-Agent:", ignoreCase = true) }?.substringAfter(':')?.trim()
+        }.orEmpty()
+        return Request(method, target.substringBefore('?'), parseQuery(target.substringAfter('?', "")), userAgent, body)
     }
 
     companion object {
         const val DEFAULT_PORT = 8642
         const val HEARTBEAT_MS = 15_000L
         private const val MAX_HEAD = 16 * 1024
+        private const val MAX_DRAIN = 64 * 1024
+        private const val TLS_HANDSHAKE = 0x16
         /** A phone sends a 480-pixel JPEG of a few dozen KB; this leaves room for a bigger one. */
         private const val MAX_BODY = 2 * 1024 * 1024
         // No 0/O or 1/I, so the code is easy to read off the TV.

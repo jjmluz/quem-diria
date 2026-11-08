@@ -28,7 +28,8 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     val lobby = Lobby()
     val room: StateFlow<Room> = lobby.room
 
-    private val server = WebServer(lobby) { name ->
+    // Requests go to logcat (`adb logcat -s QuemDiria`), to see what a phone that can't load the page sent.
+    private val server = WebServer(lobby, log = { Log.i(TAG, it) }) { name ->
         try {
             app.assets.open("web/$name").use { it.readBytes() }
         } catch (e: IOException) {

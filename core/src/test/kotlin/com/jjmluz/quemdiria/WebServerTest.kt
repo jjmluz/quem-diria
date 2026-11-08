@@ -5,6 +5,7 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLEncoder
+import java.util.Collections
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -151,6 +152,58 @@ class WebServerTest {
             Thread.sleep(50)
         }
         assertTrue(!lobby.playerFor(token)!!.connected)
+    }
+
+    @Test
+    fun anHttpsAttemptIsClosedAtOnceAndPlainHttpStillWorks() {
+        // The start of a TLS ClientHello, as a browser trying https:// on this port sends.
+        java.net.Socket("127.0.0.1", port).use { socket ->
+            socket.soTimeout = 2000
+            socket.getOutputStream().apply {
+                write(byteArrayOf(0x16, 0x03, 0x01, 0x02, 0x00, 0x01, 0x00, 0x01, 0xFC.toByte(), 0x03, 0x03))
+                flush()
+            }
+            val started = System.currentTimeMillis()
+            // Closed by the server: end of stream, not a timeout.
+            assertEquals(-1, socket.getInputStream().read())
+            assertTrue(System.currentTimeMillis() - started < 1000)
+        }
+        assertEquals(200, call("GET", "/").status)
+    }
+
+    @Test
+    fun aClientThatKeepsSendingAfterItsRequestStillGetsTheWholeResponse() {
+        // Extra bytes after the request used to be left unread, and closing then sent a reset.
+        java.net.Socket("127.0.0.1", port).use { socket ->
+            socket.soTimeout = 3000
+            socket.getOutputStream().apply {
+                write("GET / HTTP/1.1\r\nHost: x\r\n\r\n".toByteArray())
+                flush()
+                Thread.sleep(100)
+                write("GET /app.js HTTP/1.1\r\nHost: x\r\n\r\n".toByteArray())
+                flush()
+            }
+            val response = String(socket.getInputStream().readBytes())
+            assertTrue(response.startsWith("HTTP/1.1 200 OK"))
+            assertTrue(response.endsWith("<h1>hi</h1>"))
+        }
+    }
+
+    @Test
+    fun requestsAreLoggedWithoutTokens() {
+        val lines = Collections.synchronizedList(mutableListOf<String>())
+        val logged = WebServer(lobby, code = "AB23", log = { lines += it }) { pages[it]?.toByteArray() }
+        val loggedPort = logged.start(0)
+        try {
+            val connection = URI("http://127.0.0.1:$loggedPort/api/me?t=secret").toURL().openConnection() as HttpURLConnection
+            connection.setRequestProperty("User-Agent", "TestPhone/1.0")
+            assertEquals(401, connection.responseCode)
+            val deadline = System.currentTimeMillis() + 2000
+            while (lines.isEmpty() && System.currentTimeMillis() < deadline) Thread.sleep(10)
+            assertEquals("127.0.0.1: GET /api/me (TestPhone/1.0)", lines.single())
+        } finally {
+            logged.stop()
+        }
     }
 
     @Test

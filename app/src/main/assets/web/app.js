@@ -4,7 +4,6 @@
 
 const STRINGS = {
   en: {
-    roomCode: 'Code on the TV',
     yourName: 'Your name', join: 'Join', takeSelfie: 'Take a selfie', newSelfie: 'New selfie',
     sending: 'Sending…', change: 'Change', save: 'Save', leave: 'Leave the game',
     leaveConfirm: 'Leave the game?',
@@ -15,13 +14,11 @@ const STRINGS = {
     ready: 'Everyone in? Start the game on the TV with OK.',
     errName: 'Type a name of up to 14 letters.', errTaken: 'Someone already has that name.',
     errFull: 'The game is full.', errStarted: 'The game has already started. Join the next one!',
-    errCode: 'That QR code is from an old game. Scan the one on the TV.',
     errNetwork: 'Can’t reach the TV. Are you on the same Wi-Fi?',
     errSelfie: 'That photo didn’t work. Try again.',
-    errRestarted: 'The TV started a new game. Scan its QR code again, or type the code it shows.',
+    errRestarted: 'The TV started a new game. Join again.',
   },
   pt: {
-    roomCode: 'Código na TV',
     yourName: 'O teu nome', join: 'Entrar', takeSelfie: 'Tirar uma selfie', newSelfie: 'Nova selfie',
     sending: 'A enviar…', change: 'Mudar', save: 'Guardar', leave: 'Sair do jogo',
     leaveConfirm: 'Sair do jogo?',
@@ -32,10 +29,9 @@ const STRINGS = {
     ready: 'Estão todos? Comecem o jogo na TV com OK.',
     errName: 'Escreve um nome até 14 letras.', errTaken: 'Já há alguém com esse nome.',
     errFull: 'O jogo está cheio.', errStarted: 'O jogo já começou. Entra no próximo!',
-    errCode: 'Esse código QR é de um jogo antigo. Lê o que está na TV.',
     errNetwork: 'Não consigo chegar à TV. Estás na mesma rede Wi-Fi?',
     errSelfie: 'Essa foto não deu. Tenta outra vez.',
-    errRestarted: 'A TV começou um jogo novo. Lê outra vez o código QR, ou escreve o código que ela mostra.',
+    errRestarted: 'A TV começou um jogo novo. Entra outra vez.',
   },
 };
 // The TV sets <html lang> to its own language, so every phone in the room reads the same one.
@@ -46,12 +42,11 @@ const T = STRINGS[lang] || STRINGS.en;
 const COLOURS = ['#FF5C8A', '#FFC83D', '#2EC4B6', '#4D8DFF', '#A974FF', '#FF8A3D', '#7BD389', '#FF9BD2'];
 
 const $ = (id) => document.getElementById(id);
-const params = new URLSearchParams(location.search);
-// The room code comes from the QR code; it is remembered so a reload without it still works.
-let code = (params.get('c') || sessionStorage.getItem('qd.code') || '').toUpperCase();
-if (code) sessionStorage.setItem('qd.code', code);
+// An old link may still carry a room code (?c=): there's none any more, so tidy the address.
+if (location.search) history.replaceState(null, '', '/');
 
-let token = code ? localStorage.getItem('qd.token:' + code) || '' : '';
+// From joining. A TV that restarted doesn't know it, and the page then asks to join again.
+let token = localStorage.getItem('qd.token') || '';
 let events = null;
 let room = null;
 let uploading = false;
@@ -64,12 +59,12 @@ function show(id) {
 
 function saveToken(value) {
   token = value;
-  if (value) localStorage.setItem('qd.token:' + code, value);
-  else localStorage.removeItem('qd.token:' + code);
+  if (value) localStorage.setItem('qd.token', value);
+  else localStorage.removeItem('qd.token');
 }
 
 function errorText(json) {
-  return ({ name: T.errName, taken: T.errTaken, full: T.errFull, started: T.errStarted, code: T.errCode })[json && json.error] || T.errNetwork;
+  return ({ name: T.errName, taken: T.errTaken, full: T.errFull, started: T.errStarted })[json && json.error] || T.errNetwork;
 }
 
 async function post(path, body, type) {
@@ -88,31 +83,21 @@ function showJoin(message) {
   $('join-error').hidden = !message;
   $('join-error').textContent = message || '';
   $('name').value = localStorage.getItem('qd.name') || '';
-  $('code-field').hidden = !!code;
-  $('code').value = code;
 }
 
 $('join-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = $('name').value.trim();
-  if (!$('code-field').hidden) {
-    code = $('code').value.trim().toUpperCase();
-    sessionStorage.setItem('qd.code', code);
-    // So a reload keeps the typed code, as one from the QR code is kept.
-    history.replaceState(null, '', '/?c=' + encodeURIComponent(code));
-  }
   const button = e.submitter || $('join-form').querySelector('button');
   button.disabled = true;
   try {
-    const { status, json } = await post('/api/join', new URLSearchParams({ c: code, name }));
+    const { status, json } = await post('/api/join', new URLSearchParams({ name }));
     if (status === 200) {
       saveToken(json.token);
       localStorage.setItem('qd.name', name);
       connect();
     } else {
       showJoin(errorText(json));
-      // A wrong code: let them type the right one.
-      if (json && json.error === 'code') $('code-field').hidden = false;
     }
   } catch (err) {
     showJoin(T.errNetwork);
@@ -141,10 +126,6 @@ async function checkToken() {
     if (response.status === 401) {
       $('offline').hidden = true;
       saveToken('');
-      // A restarted TV always has a new room code, so ask for it rather than fail with the old one.
-      code = '';
-      sessionStorage.removeItem('qd.code');
-      history.replaceState(null, '', '/');
       showJoin(T.errRestarted);
       return;
     }
@@ -153,7 +134,7 @@ async function checkToken() {
 }
 
 function selfieUrl(player) {
-  return '/selfie/' + player.id + '?c=' + code + '&v=' + player.selfie;
+  return '/selfie/' + player.id + '?t=' + encodeURIComponent(token) + '&v=' + player.selfie;
 }
 
 function avatar(el, player, big) {

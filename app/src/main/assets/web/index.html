@@ -13,11 +13,6 @@
 <main>
   <section id="join" hidden>
     <form id="join-form" autocomplete="off">
-      <!-- Only for a phone that typed the address instead of scanning the QR code. -->
-      <div id="code-field" hidden>
-        <label for="code" data-t="roomCode"></label>
-        <input id="code" name="code" maxlength="4" autocapitalize="characters" spellcheck="false">
-      </div>
       <label for="name" data-t="yourName"></label>
       <input id="name" name="name" maxlength="14" autocapitalize="words" enterkeyhint="go" required>
       <p class="error" id="join-error" hidden></p>

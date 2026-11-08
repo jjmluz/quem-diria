@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test players that play: they join the TV's room and vote, answer, draw and pick on their own.
 
-Usage: python3 tools/test_players/bots.py <tv host:port> <room code> [number of bots, default 2]
+Usage: python3 tools/test_players/bots.py <tv host:port> [number of bots, default 2]
 Names: Robô Rui, Robô Eva and so on, or your own: BOT_NAMES="Sara Margarida,Pedro Henrique" python3 ...
 Stop with Ctrl-C: their phones "go away" and they grey out on the TV.
 Each bot acts 2-8 seconds into each stage, at random. Their drawings are their own selfie.
@@ -30,13 +30,13 @@ def post(url, data, content_type="application/x-www-form-urlencoded"):
 
 
 class Bot:
-    def __init__(self, host, code, name, selfie):
+    def __init__(self, host, name, selfie):
         self.base = f"http://{host}"
         self.name = name
         self.selfie = selfie
-        status, body = post(f"{self.base}/api/join", urllib.parse.urlencode({"c": code, "name": name}).encode())
+        status, body = post(f"{self.base}/api/join", urllib.parse.urlencode({"name": name}).encode())
         if status != 200:
-            sys.exit(f"{name} couldn't join ({status}): is the code right, and the TV in its room?")
+            sys.exit(f"{name} couldn't join ({status}): is the TV in its room?")
         joined = json.loads(body)
         self.token, self.id = joined["token"], joined["id"]
         post(f"{self.base}/api/selfie?t={self.token}", selfie, "image/jpeg")
@@ -89,14 +89,14 @@ class Bot:
 
 
 def main():
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         sys.exit(__doc__)
-    host, code = sys.argv[1], sys.argv[2].upper()
-    count = int(sys.argv[3]) if len(sys.argv) > 3 else 2
+    host = sys.argv[1]
+    count = int(sys.argv[2]) if len(sys.argv) > 2 else 2
     bots = []
     for i in range(count):
         with open(os.path.join(HERE, f"bot{i % 2 + 1}.jpg"), "rb") as f:
-            bots.append(Bot(host, code, NAMES[i % len(NAMES)], f.read()))
+            bots.append(Bot(host, NAMES[i % len(NAMES)], f.read()))
     for bot in bots:
         threading.Thread(target=bot.follow, daemon=True).start()
     print("bots are playing; Ctrl-C to stop")

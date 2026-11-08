@@ -12,29 +12,28 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
 import java.net.URLDecoder
-import java.security.SecureRandom
 import java.util.Collections
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 /**
  * The web server on the TV that the phones play through. A phone opens the page from the QR code
- * (`http://<tv>:<port>/?c=<code>`) in its browser, so nobody installs anything.
+ * (`http://<tv>:<port>/`) in its browser, so nobody installs anything.
  *
  * Phones send what they do as small POSTs and hear about every change to the room on one long-lived
  * server-sent event stream (`/api/events`), which browsers reconnect by themselves when a phone wakes up.
  * Plain HTTP/1.1 with one request per connection is plenty for eight phones on a home network, and keeps
  * the TV app free of a server library.
  *
- * Joining needs the room [code] from the QR code, so something else on the network can't join by
- * guessing the address. Everything after that uses the player's token.
+ * Anyone who opens the address can join: it's a home network, and asking for a room code only got in
+ * the way. Everything after joining uses the player's secret token, the photos and drawings too, so
+ * only players in the room can see them.
  *
  * @param asset the bytes of a file of the phone page (`index.html`, `app.js`...), or null if there's none.
  * @param log where each request and refused connection is reported, for finding out what a phone sent.
  */
 class WebServer(
     private val lobby: Lobby,
-    val code: String = newCode(),
     private val log: (String) -> Unit = {},
     /** The same clock the game's deadlines use, to tell phones how long a stage has left. */
     private val clock: () -> Long = System::currentTimeMillis,
@@ -183,7 +182,6 @@ class WebServer(
     }
 
     private fun join(out: OutputStream, form: Map<String, String>) {
-        if (form["c"]?.uppercase() != code) return respond(out, 403, "{\"error\":\"code\"}")
         when (val result = lobby.join(form["name"].orEmpty())) {
             is JoinResult.Joined -> respond(out, 200, "{\"token\":\"${result.token}\",\"id\":${result.id}}")
             JoinResult.BadName -> respond(out, 409, "{\"error\":\"name\"}")
@@ -234,7 +232,7 @@ class WebServer(
     }
 
     private fun selfie(out: OutputStream, request: Request) {
-        if (request.query["c"]?.uppercase() != code) return respond(out, 403, "")
+        if (lobby.playerFor(request.query["t"].orEmpty()) == null) return respond(out, 403, "")
         val id = request.path.removePrefix("/selfie/").toIntOrNull()
         val jpeg = lobby.room.value.players.firstOrNull { it.id == id }?.selfie ?: return respond(out, 404, "")
         // The URL carries the selfie's version, so a new selfie gets a new URL and this one never changes.
@@ -243,7 +241,7 @@ class WebServer(
 
     /** A drawing of the current spotlight turn, for the phones' gallery. Anonymous until the reveal. */
     private fun drawing(out: OutputStream, request: Request) {
-        if (request.query["c"]?.uppercase() != code) return respond(out, 403, "")
+        if (lobby.playerFor(request.query["t"].orEmpty()) == null) return respond(out, 403, "")
         val id = request.path.removePrefix("/drawing/").toIntOrNull()
         val jpeg = lobby.room.value.game?.drawings?.get(id) ?: return respond(out, 404, "")
         // The URL carries the stage's serial, so the same address never means another drawing.
@@ -359,18 +357,11 @@ class WebServer(
         private const val TLS_HANDSHAKE = 0x16
         /** A phone sends a 480-pixel JPEG of a few dozen KB; this leaves room for a bigger one. */
         private const val MAX_BODY = 2 * 1024 * 1024
-        // No 0/O or 1/I, so the code is easy to read off the TV.
-        private const val ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
         private val REASONS = mapOf(
             200 to "OK", 204 to "No Content", 400 to "Bad Request", 401 to "Unauthorized", 403 to "Forbidden",
             404 to "Not Found", 405 to "Method Not Allowed", 409 to "Conflict", 413 to "Payload Too Large",
             415 to "Unsupported Media Type",
         )
-
-        fun newCode(): String {
-            val random = SecureRandom()
-            return List(4) { ALPHABET[random.nextInt(ALPHABET.length)] }.joinToString("")
-        }
 
         private fun isJpeg(bytes: ByteArray) =
             bytes.size > 3 && bytes[0] == 0xFF.toByte() && bytes[1] == 0xD8.toByte() && bytes[2] == 0xFF.toByte()

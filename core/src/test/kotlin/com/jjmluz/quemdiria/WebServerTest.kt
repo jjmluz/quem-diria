@@ -18,7 +18,7 @@ import kotlin.test.assertTrue
 class WebServerTest {
     private val lobby = Lobby()
     private val pages = mapOf("index.html" to "<html><h1>hi</h1>", "app.js" to "go()")
-    private val server = WebServer(lobby, code = "AB23") { pages[it]?.toByteArray() }
+    private val server = WebServer(lobby) { pages[it]?.toByteArray() }
     private var port = 0
 
     @BeforeTest
@@ -50,14 +50,14 @@ class WebServerTest {
         pairs.joinToString("&") { (k, v) -> "$k=${URLEncoder.encode(v, "UTF-8")}" }.toByteArray()
 
     private fun join(name: String): String {
-        val response = call("POST", "/api/join", form("c" to "ab23", "name" to name))
+        val response = call("POST", "/api/join", form("name" to name))
         assertEquals(200, response.status, response.text)
         return Regex("\"token\":\"(\\w+)\"").find(response.text)!!.groupValues[1]
     }
 
     @Test
     fun servesThePhonePage() {
-        val index = call("GET", "/?c=AB23")
+        val index = call("GET", "/")
         assertEquals(200, index.status)
         assertEquals("text/html; charset=utf-8", index.type)
         assertEquals("<html lang=\"en\"><h1>hi</h1>", index.text)
@@ -67,20 +67,20 @@ class WebServerTest {
     }
 
     @Test
-    fun joiningNeedsTheRoomCode() {
-        assertEquals(403, call("POST", "/api/join", form("c" to "ZZZZ", "name" to "Ana")).status)
-        assertTrue(lobby.room.value.players.isEmpty())
+    fun anyoneOnTheNetworkCanJoin() {
         join("Ana")
-        assertEquals(listOf("Ana"), lobby.room.value.players.map { it.name })
+        // An old link with a room code in it, from before there was no code, still works.
+        assertEquals(200, call("POST", "/api/join", form("c" to "ZZZZ", "name" to "Rui")).status)
+        assertEquals(listOf("Ana", "Rui"), lobby.room.value.players.map { it.name })
     }
 
     @Test
     fun joinErrorsSayWhy() {
         join("Ana")
-        val taken = call("POST", "/api/join", form("c" to "AB23", "name" to "ana"))
+        val taken = call("POST", "/api/join", form("name" to "ana"))
         assertEquals(409, taken.status)
         assertEquals("{\"error\":\"taken\"}", taken.text)
-        assertEquals("{\"error\":\"name\"}", call("POST", "/api/join", form("c" to "AB23", "name" to " ")).text)
+        assertEquals("{\"error\":\"name\"}", call("POST", "/api/join", form("name" to " ")).text)
     }
 
     @Test
@@ -109,8 +109,10 @@ class WebServerTest {
         assertEquals(415, call("POST", "/api/selfie?t=$token", byteArrayOf(1, 2, 3, 4), "image/jpeg").status)
         assertEquals(204, call("POST", "/api/selfie?t=$token", jpeg, "image/jpeg").status)
         val id = lobby.playerFor(token)!!.id
-        assertEquals(403, call("GET", "/selfie/$id?c=NOPE").status)
-        val back = call("GET", "/selfie/$id?c=AB23&v=1")
+        // Only players see the photos: not some other device on the network.
+        assertEquals(403, call("GET", "/selfie/$id").status)
+        assertEquals(403, call("GET", "/selfie/$id?t=wrong").status)
+        val back = call("GET", "/selfie/$id?t=${join("Rui")}&v=1")
         assertEquals("image/jpeg", back.type)
         assertContentEquals(jpeg, back.body)
         assertContains(call("GET", "/api/me?t=$token").text, "\"selfie\":1")
@@ -192,7 +194,7 @@ class WebServerTest {
     @Test
     fun requestsAreLoggedWithoutTokens() {
         val lines = Collections.synchronizedList(mutableListOf<String>())
-        val logged = WebServer(lobby, code = "AB23", log = { lines += it }) { pages[it]?.toByteArray() }
+        val logged = WebServer(lobby, log = { lines += it }) { pages[it]?.toByteArray() }
         val loggedPort = logged.start(0)
         try {
             val connection = URI("http://127.0.0.1:$loggedPort/api/me?t=secret").toURL().openConnection() as HttpURLConnection
@@ -252,8 +254,8 @@ class WebServerTest {
         lobby.skip(0)
         assertEquals(Stage.PICK, lobby.room.value.game!!.stage)
         val drawer = lobby.idFor(drawers[0])!!
-        assertContentEquals(jpeg, call("GET", "/drawing/$drawer?c=AB23&s=1").body)
-        assertEquals(403, call("GET", "/drawing/$drawer?c=NOPE").status)
+        assertContentEquals(jpeg, call("GET", "/drawing/$drawer?t=${drawers[1]}&s=1").body)
+        assertEquals(403, call("GET", "/drawing/$drawer?t=wrong").status)
         assertEquals(409, call("POST", "/api/pick?t=${drawers[0]}", form("drawer" to drawer.toString())).status)
         assertEquals(204, call("POST", "/api/pick?t=$spotlightToken", form("drawer" to drawer.toString())).status)
         assertTrue(ids.isNotEmpty())
@@ -272,8 +274,8 @@ class WebServerTest {
 
     @Test
     fun thePageTakesTheTvsLanguage() {
-        assertEquals("<html lang=\"en\"><h1>hi</h1>", call("GET", "/?c=AB23").text)
-        val pt = WebServer(lobby, code = "AB23", language = Language.PT) { pages[it]?.toByteArray() }
+        assertEquals("<html lang=\"en\"><h1>hi</h1>", call("GET", "/").text)
+        val pt = WebServer(lobby, language = Language.PT) { pages[it]?.toByteArray() }
         val ptPort = pt.start(0)
         try {
             val page = java.net.URI("http://localhost:$ptPort/").toURL().readText()

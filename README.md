@@ -33,8 +33,8 @@ open its page.
 ## Playing
 
 1. Open Quem Diria? on the TV.
-2. Each player scans the QR code with their phone's camera, or opens the address under it and types the
-   four-letter code. Everyone needs to be on the TV's Wi-Fi.
+2. Each player scans the QR code with their phone's camera, or opens the address under it.
+   Everyone needs to be on the TV's Wi-Fi.
 3. Type a name and tap the circle to take a selfie (optional: without one, the TV shows your initial).
 4. With 3 to 8 players in, pick **Start the game** with the remote. Left and right also reach **Questions:
    family / adults** and **Narrator on / off**; the TV remembers both.

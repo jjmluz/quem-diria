@@ -21,8 +21,8 @@ import kotlin.random.Random
 private const val TAG = "QuemDiria"
 
 /** Where the phones find the TV: the address to show, and the full link for the QR code. */
-data class Invite(val host: String, val code: String) {
-    val url: String get() = "http://$host/?c=$code"
+data class Invite(val host: String) {
+    val url: String get() = "http://$host/"
 }
 
 /** The lobby's buttons along the bottom, picked with left and right. */
@@ -100,7 +100,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     private fun updateInvite() {
         val props = connectivity.getLinkProperties(connectivity.activeNetwork)
         val ip = props?.linkAddresses?.map { it.address }?.firstOrNull { it is Inet4Address && !it.isLoopbackAddress }
-        _invite.value = if (ip != null && port != 0) Invite("${ip.hostAddress}:$port", server.code) else null
+        _invite.value = if (ip != null && port != 0) Invite("${ip.hostAddress}:$port") else null
     }
 
     private var pausedAt = 0L

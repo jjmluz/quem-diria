@@ -329,7 +329,7 @@ function renderPick(room, g, body) {
   const grid = el('div', { class: 'gallery' });
   g.drawers.forEach((drawer, i) => {
     const own = drawer === room.you;
-    const img = el('img', { src: '/drawing/' + drawer + '?c=' + code + '&s=' + g.serial, alt: String(i + 1) });
+    const img = el('img', { src: '/drawing/' + drawer + '?t=' + encodeURIComponent(token) + '&s=' + g.serial, alt: String(i + 1) });
     const button = el('button', {
       type: 'button',
       class: 'drawing' + (g.picked === drawer ? ' chosen' : '') + (own ? ' own' : ''),

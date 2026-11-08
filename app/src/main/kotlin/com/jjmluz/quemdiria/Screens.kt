@@ -165,7 +165,7 @@ private fun JoinCard(invite: Invite?) {
         )
         Spacer(Modifier.height(8.dp))
         BasicText(
-            stringResource(R.string.or_open, invite.host, invite.code),
+            stringResource(R.string.or_open, invite.host),
             style = TextStyle(color = Muted, fontSize = 14.sp, textAlign = TextAlign.Center),
         )
     }

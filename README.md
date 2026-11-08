@@ -39,8 +39,8 @@ open its page.
 4. With 3 to 8 players in, pick **Start the game** with the remote. Left and right also reach **Questions:
    family / adults** and **Narrator on / off**; the TV remembers both.
 
-During a game, OK skips the wait ("Don't wait") and Back pauses, offering to leave. Language follows the TV
-(questions and TV) and each phone (its page): Portuguese from Portugal, otherwise English.
+During a game, OK skips the wait ("Don't wait") and Back pauses, offering to leave. Language follows the TV,
+phones included, so the whole room plays in one: Portuguese from Portugal, otherwise English.
 
 ## Questions
 

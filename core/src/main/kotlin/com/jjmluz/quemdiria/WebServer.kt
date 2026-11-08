@@ -38,6 +38,8 @@ class WebServer(
     private val log: (String) -> Unit = {},
     /** The same clock the game's deadlines use, to tell phones how long a stage has left. */
     private val clock: () -> Long = System::currentTimeMillis,
+    /** The TV's language. Phones show their words in it too, so the whole room plays in one language. */
+    private val language: Language = Language.EN,
     private val asset: (String) -> ByteArray?,
 ) {
     private var server: ServerSocket? = null
@@ -251,7 +253,12 @@ class WebServer(
     private fun page(out: OutputStream, path: String) {
         val name = if (path == "/") "index.html" else path.removePrefix("/")
         if (name.contains("..") || name.contains('/')) return respond(out, 404, "")
-        val bytes = asset(name) ?: return respond(out, 404, "")
+        var bytes = asset(name) ?: return respond(out, 404, "")
+        if (name == "index.html") {
+            // The page reads its language from <html lang>, so it matches the TV and not the phone.
+            val lang = language.name.lowercase()
+            bytes = String(bytes, Charsets.UTF_8).replaceFirst("<html>", "<html lang=\"$lang\">").toByteArray()
+        }
         val type = when (name.substringAfterLast('.')) {
             "html" -> "text/html; charset=utf-8"
             "js" -> "text/javascript; charset=utf-8"

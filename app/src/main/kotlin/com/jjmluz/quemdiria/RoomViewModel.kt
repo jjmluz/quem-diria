@@ -37,8 +37,12 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     val lobby = Lobby()
     val room: StateFlow<Room> = lobby.room
 
+    /** The game's language, questions and phones included: the TV's, when it's Portuguese; English otherwise. */
+    val language: Language =
+        if (app.resources.configuration.locales[0].language == "pt") Language.PT else Language.EN
+
     // Requests go to logcat (`adb logcat -s QuemDiria`), to see what a phone that can't load the page sent.
-    private val server = WebServer(lobby, log = { Log.i(TAG, it) }) { name ->
+    private val server = WebServer(lobby, log = { Log.i(TAG, it) }, language = language) { name ->
         try {
             app.assets.open("web/$name").use { it.readBytes() }
         } catch (e: IOException) {
@@ -47,10 +51,6 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private val prefs = app.getSharedPreferences("settings", Context.MODE_PRIVATE)
-
-    /** The questions' language: the TV's, when it's Portuguese; English otherwise. */
-    val language: Language =
-        if (app.resources.configuration.locales[0].language == "pt") Language.PT else Language.EN
 
     private val _invite = MutableStateFlow<Invite?>(null)
     /** Null while the TV has no network address, or the server couldn't start. */

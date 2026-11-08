@@ -1,5 +1,5 @@
 // The phone's screens during a game. app.js calls renderGame(room) with every state the TV sends.
-// Questions arrive in the TV's language; the phone's own words follow the phone's language.
+// Questions and the phone's own words are both in the TV's language (see `lang` in app.js).
 'use strict';
 
 Object.assign(STRINGS.en, {

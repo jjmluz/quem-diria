@@ -38,7 +38,8 @@ const STRINGS = {
     errRestarted: 'A TV começou um jogo novo. Lê outra vez o código QR, ou escreve o código que ela mostra.',
   },
 };
-const lang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+// The TV sets <html lang> to its own language, so every phone in the room reads the same one.
+const lang = (document.documentElement.lang || navigator.language || 'en').slice(0, 2).toLowerCase();
 const T = STRINGS[lang] || STRINGS.en;
 
 // The same player colours as the TV's (Theme.kt), by index.

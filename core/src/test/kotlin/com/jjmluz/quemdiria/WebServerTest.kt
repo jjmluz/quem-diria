@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 /** The server over real sockets on localhost, as a phone's browser would use it. */
 class WebServerTest {
     private val lobby = Lobby()
-    private val pages = mapOf("index.html" to "<h1>hi</h1>", "app.js" to "go()")
+    private val pages = mapOf("index.html" to "<html><h1>hi</h1>", "app.js" to "go()")
     private val server = WebServer(lobby, code = "AB23") { pages[it]?.toByteArray() }
     private var port = 0
 
@@ -60,7 +60,7 @@ class WebServerTest {
         val index = call("GET", "/?c=AB23")
         assertEquals(200, index.status)
         assertEquals("text/html; charset=utf-8", index.type)
-        assertEquals("<h1>hi</h1>", index.text)
+        assertEquals("<html lang=\"en\"><h1>hi</h1>", index.text)
         assertEquals("go()", call("GET", "/app.js").text)
         assertEquals(404, call("GET", "/missing.css").status)
         assertEquals(404, call("GET", "/../secret").status)
@@ -268,5 +268,18 @@ class WebServerTest {
     @Test
     fun jsonStringsAreEscaped() {
         assertEquals("\"a\\\"b\\\\c\\u000a\"", WebServer.jsonString("a\"b\\c\n"))
+    }
+
+    @Test
+    fun thePageTakesTheTvsLanguage() {
+        assertEquals("<html lang=\"en\"><h1>hi</h1>", call("GET", "/?c=AB23").text)
+        val pt = WebServer(lobby, code = "AB23", language = Language.PT) { pages[it]?.toByteArray() }
+        val ptPort = pt.start(0)
+        try {
+            val page = java.net.URI("http://localhost:$ptPort/").toURL().readText()
+            assertEquals("<html lang=\"pt\"><h1>hi</h1>", page)
+        } finally {
+            pt.stop()
+        }
     }
 }

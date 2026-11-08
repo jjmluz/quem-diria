@@ -1,0 +1,13 @@
+<resources>
+    <string name="scan_to_join">Scanne avec l\'appareil photo du téléphone pour entrer</string>
+    <string name="or_open">ou ouvre %1$s et tape le code %2$s</string>
+    <string name="no_network">Connecte la télé au Wi-Fi pour que les téléphones puissent entrer.</string>
+    <string name="players">Joueurs</string>
+    <plurals name="players_missing">
+        <item quantity="one">Il manque %d joueur</item>
+        <item quantity="other">Il manque %d joueurs</item>
+    </plurals>
+    <string name="start">Lancer la partie</string>
+    <string name="coming_soon">Tout le monde est là ! Les manches arrivent bientôt.</string>
+    <string name="back_to_lobby">Retour au salon</string>
+</resources>

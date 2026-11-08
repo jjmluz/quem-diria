@@ -1,0 +1,324 @@
+package com.jjmluz.quemdiria
+
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import java.io.BufferedInputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.InetSocketAddress
+import java.net.ServerSocket
+import java.net.Socket
+import java.net.SocketException
+import java.net.URLDecoder
+import java.security.SecureRandom
+import java.util.Collections
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+
+/**
+ * The web server on the TV that the phones play through. A phone opens the page from the QR code
+ * (`http://<tv>:<port>/?c=<code>`) in its browser, so nobody installs anything.
+ *
+ * Phones send what they do as small POSTs and hear about every change to the room on one long-lived
+ * server-sent event stream (`/api/events`), which browsers reconnect by themselves when a phone wakes up.
+ * Plain HTTP/1.1 with one request per connection is plenty for eight phones on a home network, and keeps
+ * the TV app free of a server library.
+ *
+ * Joining needs the room [code] from the QR code, so something else on the network can't join by
+ * guessing the address. Everything after that uses the player's token.
+ *
+ * @param asset the bytes of a file of the phone page (`index.html`, `app.js`...), or null if there's none.
+ */
+class WebServer(
+    private val lobby: Lobby,
+    val code: String = newCode(),
+    private val asset: (String) -> ByteArray?,
+) {
+    private var server: ServerSocket? = null
+    private var pool: ExecutorService? = null
+    private val clients = Collections.synchronizedSet(mutableSetOf<Socket>())
+
+    /** The port it listens on, once [start]ed. */
+    var port: Int = 0
+        private set
+
+    /**
+     * Listens on the first free port from [first] (0 picks any, for tests). Returns the port.
+     * @throws IOException if none of the ten ports from [first] is free.
+     */
+    fun start(first: Int = DEFAULT_PORT): Int {
+        val socket = bind(first)
+        server = socket
+        port = socket.localPort
+        val threads = Executors.newCachedThreadPool { r -> Thread(r, "quemdiria-web").apply { isDaemon = true } }
+        pool = threads
+        threads.execute {
+            while (!socket.isClosed) {
+                val client = try { socket.accept() } catch (e: IOException) { break }
+                clients += client
+                threads.execute {
+                    try {
+                        client.use(::handle)
+                    } finally {
+                        clients -= client
+                    }
+                }
+            }
+        }
+        return port
+    }
+
+    /** Closes the server and every phone's connection, which ends their event streams. */
+    fun stop() {
+        runCatching { server?.close() }
+        synchronized(clients) { clients.toList() }.forEach { runCatching { it.close() } }
+        pool?.shutdownNow()
+        server = null
+    }
+
+    private fun bind(first: Int): ServerSocket {
+        val ports = if (first == 0) listOf(0) else (first until first + 10).toList()
+        var last: IOException? = null
+        for (p in ports) {
+            val socket = ServerSocket()
+            try {
+                socket.reuseAddress = true
+                socket.bind(InetSocketAddress(p))
+                return socket
+            } catch (e: IOException) {
+                socket.close()
+                last = e
+            }
+        }
+        throw last ?: IOException("no port")
+    }
+
+    private fun handle(socket: Socket) {
+        socket.soTimeout = 15_000
+        val out = socket.getOutputStream()
+        val request = try {
+            readRequest(BufferedInputStream(socket.getInputStream()))
+        } catch (e: TooLarge) {
+            return respond(out, 413, "{\"error\":\"too_large\"}")
+        } catch (e: IOException) {
+            return
+        } catch (e: RuntimeException) {
+            return respond(out, 400, "")
+        }
+        val token = request.query["t"].orEmpty()
+        when {
+            request.method == "GET" && request.path == "/api/events" -> {
+                socket.soTimeout = 0
+                events(out, token)
+            }
+            request.method == "GET" && request.path == "/api/me" ->
+                lobby.playerFor(token)?.let { respond(out, 200, stateJson(lobby.room.value, it.id)) }
+                    ?: respond(out, 401, "")
+            request.method == "POST" && request.path == "/api/join" -> join(out, request.form())
+            request.method == "POST" && request.path == "/api/name" -> {
+                if (lobby.playerFor(token) == null) return respond(out, 401, "")
+                val name = request.form()["name"].orEmpty()
+                when {
+                    lobby.rename(token, name) -> respond(out, 204, "")
+                    Lobby.cleanName(name) == null -> respond(out, 409, "{\"error\":\"name\"}")
+                    else -> respond(out, 409, "{\"error\":\"taken\"}")
+                }
+            }
+            request.method == "POST" && request.path == "/api/selfie" -> {
+                val image = request.body
+                when {
+                    !isJpeg(image) -> respond(out, 415, "")
+                    lobby.setSelfie(token, image) -> respond(out, 204, "")
+                    else -> respond(out, 401, "")
+                }
+            }
+            request.method == "POST" && request.path == "/api/leave" ->
+                respond(out, if (lobby.leave(token)) 204 else 401, "")
+            request.method == "GET" && request.path.startsWith("/selfie/") -> selfie(out, request)
+            request.method == "GET" -> page(out, request.path)
+            else -> respond(out, 405, "")
+        }
+    }
+
+    private fun join(out: OutputStream, form: Map<String, String>) {
+        if (form["c"]?.uppercase() != code) return respond(out, 403, "{\"error\":\"code\"}")
+        when (val result = lobby.join(form["name"].orEmpty())) {
+            is JoinResult.Joined -> respond(out, 200, "{\"token\":\"${result.token}\",\"id\":${result.id}}")
+            JoinResult.BadName -> respond(out, 409, "{\"error\":\"name\"}")
+            JoinResult.NameTaken -> respond(out, 409, "{\"error\":\"taken\"}")
+            JoinResult.Full -> respond(out, 409, "{\"error\":\"full\"}")
+            JoinResult.Started -> respond(out, 409, "{\"error\":\"started\"}")
+        }
+    }
+
+    /**
+     * The room as server-sent events: the whole state on connect and again on every change, plus a
+     * comment every [HEARTBEAT_MS] so a phone that went away is noticed (the write fails).
+     */
+    private fun events(out: OutputStream, token: String) {
+        val player = lobby.playerFor(token) ?: return respond(out, 401, "")
+        out.write(
+            ("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream; charset=utf-8\r\n" +
+                "Cache-Control: no-cache\r\nConnection: close\r\n\r\n").toByteArray()
+        )
+        out.flush()
+        lobby.streamChanged(token, open = true)
+        try {
+            // Both coroutines run on this one thread, so their writes never interleave.
+            runBlocking {
+                launch {
+                    while (true) {
+                        delay(HEARTBEAT_MS)
+                        out.write(":\n\n".toByteArray())
+                        out.flush()
+                    }
+                }
+                lobby.room.collect { room ->
+                    if (room.players.none { it.id == player.id }) {
+                        // They left (from another tab): tell the page, then end the stream.
+                        out.write("event: gone\ndata: {}\n\n".toByteArray())
+                        out.flush()
+                        throw SocketException("left")
+                    }
+                    out.write("data: ${stateJson(room, player.id)}\n\n".toByteArray(Charsets.UTF_8))
+                    out.flush()
+                }
+            }
+        } catch (e: IOException) {
+            // The phone went away or the server stopped.
+        } finally {
+            lobby.streamChanged(token, open = false)
+        }
+    }
+
+    private fun selfie(out: OutputStream, request: Request) {
+        if (request.query["c"]?.uppercase() != code) return respond(out, 403, "")
+        val id = request.path.removePrefix("/selfie/").toIntOrNull()
+        val jpeg = lobby.room.value.players.firstOrNull { it.id == id }?.selfie ?: return respond(out, 404, "")
+        // The URL carries the selfie's version, so a new selfie gets a new URL and this one never changes.
+        respond(out, 200, jpeg, "image/jpeg", "Cache-Control: max-age=86400\r\n")
+    }
+
+    private fun page(out: OutputStream, path: String) {
+        val name = if (path == "/") "index.html" else path.removePrefix("/")
+        if (name.contains("..") || name.contains('/')) return respond(out, 404, "")
+        val bytes = asset(name) ?: return respond(out, 404, "")
+        val type = when (name.substringAfterLast('.')) {
+            "html" -> "text/html; charset=utf-8"
+            "js" -> "text/javascript; charset=utf-8"
+            "css" -> "text/css; charset=utf-8"
+            "svg" -> "image/svg+xml"
+            "png" -> "image/png"
+            else -> "application/octet-stream"
+        }
+        // The page changes only with a new version of the app; no-cache makes the phone check each time.
+        respond(out, 200, bytes, type, "Cache-Control: no-cache\r\n")
+    }
+
+    private fun respond(out: OutputStream, status: Int, json: String) =
+        respond(out, status, json.toByteArray(Charsets.UTF_8), "application/json; charset=utf-8")
+
+    private fun respond(out: OutputStream, status: Int, body: ByteArray, type: String, extra: String = "") {
+        val head = "HTTP/1.1 $status ${REASONS[status] ?: "Error"}\r\n" +
+            (if (body.isNotEmpty()) "Content-Type: $type\r\n" else "") +
+            "Content-Length: ${body.size}\r\n" + extra +
+            "Connection: close\r\n\r\n"
+        try {
+            out.write(head.toByteArray())
+            out.write(body)
+            out.flush()
+        } catch (e: IOException) {
+            // The phone gave up waiting.
+        }
+    }
+
+    private class TooLarge : IOException()
+
+    private class Request(val method: String, val path: String, val query: Map<String, String>, val body: ByteArray) {
+        fun form(): Map<String, String> = parseQuery(String(body, Charsets.UTF_8))
+    }
+
+    private fun readRequest(input: InputStream): Request {
+        val head = StringBuilder()
+        while (!head.endsWith("\r\n\r\n")) {
+            val b = input.read()
+            if (b < 0) throw IOException("incomplete headers")
+            if (head.length > MAX_HEAD) throw TooLarge()
+            head.append(b.toChar())
+        }
+        val lines = head.lines()
+        val (method, target) = lines.first().split(" ").let { it[0] to it[1] }
+        val length = lines.firstNotNullOfOrNull { line ->
+            line.takeIf { it.startsWith("Content-Length:", ignoreCase = true) }?.substringAfter(':')?.trim()?.toInt()
+        } ?: 0
+        if (length > MAX_BODY) throw TooLarge()
+        val body = ByteArray(length)
+        var read = 0
+        while (read < length) {
+            val n = input.read(body, read, length - read)
+            if (n < 0) throw IOException("body cut short")
+            read += n
+        }
+        return Request(method, target.substringBefore('?'), parseQuery(target.substringAfter('?', "")), body)
+    }
+
+    companion object {
+        const val DEFAULT_PORT = 8642
+        const val HEARTBEAT_MS = 15_000L
+        private const val MAX_HEAD = 16 * 1024
+        /** A phone sends a 480-pixel JPEG of a few dozen KB; this leaves room for a bigger one. */
+        private const val MAX_BODY = 2 * 1024 * 1024
+        // No 0/O or 1/I, so the code is easy to read off the TV.
+        private const val ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+        private val REASONS = mapOf(
+            200 to "OK", 204 to "No Content", 400 to "Bad Request", 401 to "Unauthorized", 403 to "Forbidden",
+            404 to "Not Found", 405 to "Method Not Allowed", 409 to "Conflict", 413 to "Payload Too Large",
+            415 to "Unsupported Media Type",
+        )
+
+        fun newCode(): String {
+            val random = SecureRandom()
+            return List(4) { ALPHABET[random.nextInt(ALPHABET.length)] }.joinToString("")
+        }
+
+        private fun isJpeg(bytes: ByteArray) =
+            bytes.size > 3 && bytes[0] == 0xFF.toByte() && bytes[1] == 0xD8.toByte() && bytes[2] == 0xFF.toByte()
+
+        private fun parseQuery(query: String): Map<String, String> =
+            query.split('&').filter { it.isNotEmpty() }.associate { pair ->
+                val key = pair.substringBefore('=')
+                val value = pair.substringAfter('=', "")
+                URLDecoder.decode(key, "UTF-8") to URLDecoder.decode(value, "UTF-8")
+            }
+
+        /** What a phone sees: the room, and which player it is. Selfies go by version; 0 means none yet. */
+        fun stateJson(room: Room, you: Int): String = buildString {
+            append("{\"phase\":\"").append(room.phase.name).append("\",\"you\":").append(you)
+            append(",\"canStart\":").append(room.canStart)
+            append(",\"min\":").append(Lobby.MIN_PLAYERS).append(",\"max\":").append(Lobby.MAX_PLAYERS)
+            append(",\"players\":[")
+            room.players.forEachIndexed { i, p ->
+                if (i > 0) append(',')
+                append("{\"id\":").append(p.id).append(",\"name\":").append(jsonString(p.name))
+                append(",\"colour\":").append(p.colour).append(",\"selfie\":").append(p.selfieVersion)
+                append(",\"connected\":").append(p.connected).append('}')
+            }
+            append("]}")
+        }
+
+        fun jsonString(s: String): String = buildString {
+            append('"')
+            for (c in s) {
+                when {
+                    c == '"' -> append("\\\"")
+                    c == '\\' -> append("\\\\")
+                    c < ' ' || c == ' ' || c == ' ' -> append("\\u%04x".format(c.code))
+                    else -> append(c)
+                }
+            }
+            append('"')
+        }
+    }
+}

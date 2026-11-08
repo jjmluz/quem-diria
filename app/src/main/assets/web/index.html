@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#170F2B">
+<title>Quem Diria?</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><h1 class="logo">QUEM DIRIA<span>?</span></h1></header>
+
+<main>
+  <section id="join" hidden>
+    <form id="join-form" autocomplete="off">
+      <!-- Only for a phone that typed the address instead of scanning the QR code. -->
+      <div id="code-field" hidden>
+        <label for="code" data-t="roomCode"></label>
+        <input id="code" name="code" maxlength="4" autocapitalize="characters" spellcheck="false">
+      </div>
+      <label for="name" data-t="yourName"></label>
+      <input id="name" name="name" maxlength="14" autocapitalize="words" enterkeyhint="go" required>
+      <p class="error" id="join-error" hidden></p>
+      <button type="submit" data-t="join"></button>
+    </form>
+  </section>
+
+  <section id="room" hidden>
+    <button class="selfie" id="selfie-button" type="button">
+      <span class="avatar big-avatar" id="me-avatar"></span>
+      <span class="badge" id="selfie-label" data-t="takeSelfie"></span>
+    </button>
+    <input id="selfie-input" type="file" accept="image/*" capture="user" hidden>
+
+    <div class="me-name">
+      <span id="me-name"></span>
+      <button type="button" class="link" id="rename-button" data-t="change"></button>
+    </div>
+    <form id="rename-form" autocomplete="off" hidden>
+      <input id="rename" maxlength="14" autocapitalize="words" enterkeyhint="done" required>
+      <button type="submit" data-t="save"></button>
+      <p class="error" id="rename-error" hidden></p>
+    </form>
+
+    <p class="status" id="status"></p>
+    <ul class="players" id="players"></ul>
+
+    <button type="button" class="link quiet" id="leave-button" data-t="leave"></button>
+  </section>
+
+  <section id="started" hidden>
+    <p class="big" data-t="started"></p>
+  </section>
+</main>
+
+<p class="offline" id="offline" hidden data-t="reconnecting"></p>
+
+<script src="app.js"></script>
+</body>
+</html>

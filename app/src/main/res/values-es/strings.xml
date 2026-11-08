@@ -1,0 +1,13 @@
+<resources>
+    <string name="scan_to_join">Escanea con la cámara del móvil para entrar</string>
+    <string name="or_open">o abre %1$s y escribe el código %2$s</string>
+    <string name="no_network">Conecta la tele a la wifi para que entren los móviles.</string>
+    <string name="players">Jugadores</string>
+    <plurals name="players_missing">
+        <item quantity="one">Falta %d jugador</item>
+        <item quantity="other">Faltan %d jugadores</item>
+    </plurals>
+    <string name="start">Empezar el juego</string>
+    <string name="coming_soon">¡Ya estáis todos! Las rondas llegan pronto.</string>
+    <string name="back_to_lobby">Volver a la sala</string>
+</resources>

@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name" translatable="false">Quem Diria?</string>
+    <string name="scan_to_join">Scan with your phone\'s camera to join</string>
+    <string name="or_open">or open %1$s and type the code %2$s</string>
+    <string name="no_network">Connect the TV to the Wi-Fi so the phones can join.</string>
+    <string name="players">Players</string>
+    <plurals name="players_missing">
+        <item quantity="one">%d more player needed</item>
+        <item quantity="other">%d more players needed</item>
+    </plurals>
+    <string name="start">Start the game</string>
+    <string name="coming_soon">Everyone\'s in! The rounds are coming soon.</string>
+    <string name="back_to_lobby">Back to the room</string>
+</resources>

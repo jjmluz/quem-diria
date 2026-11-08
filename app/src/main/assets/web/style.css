@@ -1,0 +1,176 @@
+/* The "Serão" palette, the same as the TV's (see Theme.kt). */
+:root {
+  --background: #170F2B;
+  --card: #2A1D4A;
+  --accent: #FF5C8A;
+  --yellow: #FFC83D;
+  --text: #F6F3FF;
+  --muted: #B3A8D1;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--background);
+  color: var(--text);
+  font: 17px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+}
+
+header { text-align: center; margin: 8px 0 24px; }
+
+.logo {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.logo span { color: var(--accent); }
+
+main { max-width: 420px; margin: 0 auto; }
+
+.big { font-size: 22px; text-align: center; margin-top: 48px; }
+
+label { display: block; color: var(--muted); margin-bottom: 8px; }
+
+input {
+  width: 100%;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 20px;
+  color: var(--text);
+  background: var(--card);
+  border: 2px solid transparent;
+  border-radius: 14px;
+  outline: none;
+}
+input:focus { border-color: var(--accent); }
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+form button[type=submit] {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #170F2B;
+  background: var(--accent);
+  border: 0;
+  border-radius: 14px;
+}
+form button[type=submit]:disabled { opacity: 0.5; }
+
+.error { color: var(--yellow); margin: 10px 0 0; }
+
+.selfie {
+  display: block;
+  position: relative;
+  margin: 0 auto;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  font-weight: 800;
+  color: #170F2B;
+}
+.big-avatar { width: 160px; height: 160px; font-size: 64px; }
+
+.badge {
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 6px 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #170F2B;
+  background: var(--yellow);
+  border-radius: 999px;
+}
+
+.me-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.link {
+  padding: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: 0;
+}
+.quiet { display: block; margin: 32px auto 0; color: var(--muted); }
+
+#rename-form { margin-top: 16px; }
+
+.status { margin: 28px 0 12px; color: var(--muted); text-align: center; }
+
+.players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.players li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 10px;
+  background: var(--card);
+  border-radius: 14px;
+}
+.players li span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.players li.away { opacity: 0.45; }
+.players li.you { outline: 2px solid var(--accent); }
+
+.offline {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  margin: 0;
+  padding: 10px 14px;
+  text-align: center;
+  color: #170F2B;
+  background: var(--yellow);
+  border-radius: 12px;
+}
+
+#code-field { margin-bottom: 16px; }
+#code { text-transform: uppercase; letter-spacing: 4px; }

@@ -2,6 +2,7 @@
     <string name="scan_to_join">Scanne avec l\'appareil photo du téléphone pour entrer</string>
     <string name="or_open">ou ouvre %1$s et tape le code %2$s</string>
     <string name="no_network">Connecte la télé au Wi-Fi pour que les téléphones puissent entrer.</string>
+    <string name="local_network_hint">La page ne s\'ouvre pas ? Autorise Chrome sur le réseau local : Paramètres › Applis › Chrome › Autorisations.</string>
     <string name="players">Joueurs</string>
     <plurals name="players_missing">
         <item quantity="one">Il manque %d joueur</item>

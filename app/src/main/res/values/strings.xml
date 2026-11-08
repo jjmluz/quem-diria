@@ -3,6 +3,7 @@
     <string name="scan_to_join">Scan with your phone\'s camera to join</string>
     <string name="or_open">or open %1$s and type the code %2$s</string>
     <string name="no_network">Connect the TV to the Wi-Fi so the phones can join.</string>
+    <string name="local_network_hint">Page won\'t open? Allow Chrome on the local network: Settings › Apps › Chrome › Permissions.</string>
     <string name="players">Players</string>
     <plurals name="players_missing">
         <item quantity="one">%d more player needed</item>

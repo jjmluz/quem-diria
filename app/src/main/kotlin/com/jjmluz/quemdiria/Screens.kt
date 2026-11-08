@@ -144,6 +144,14 @@ private fun JoinCard(invite: Invite?) {
             style = TextStyle(color = Muted, fontSize = 14.sp, textAlign = TextAlign.Center),
         )
     }
+    // Android 17 asks before an app reaches devices at home. If Chrome was refused, the page fails with
+    // ERR_TOO_MANY_RETRIES and the TV never hears from the phone, so the fix can only be shown here.
+    Spacer(Modifier.height(10.dp))
+    BasicText(
+        stringResource(R.string.local_network_hint),
+        style = TextStyle(color = Muted, fontSize = 12.sp, textAlign = TextAlign.Center),
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable

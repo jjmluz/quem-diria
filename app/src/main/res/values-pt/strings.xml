@@ -2,6 +2,7 @@
     <string name="scan_to_join">Lê com a câmara do telemóvel para entrar</string>
     <string name="or_open">ou abre %1$s e escreve o código %2$s</string>
     <string name="no_network">Liga a TV ao Wi-Fi para os telemóveis poderem entrar.</string>
+    <string name="local_network_hint">A página não abre? Permite ao Chrome aceder à rede local: Definições › Apps › Chrome › Autorizações.</string>
     <string name="players">Jogadores</string>
     <plurals name="players_missing">
         <item quantity="one">Falta %d jogador</item>

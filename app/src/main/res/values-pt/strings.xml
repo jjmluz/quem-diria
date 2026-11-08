@@ -20,7 +20,7 @@
     <string name="vote_on_phones">Votem nos telemóveis</string>
     <string name="next">Seguinte</string>
     <string name="dont_wait">Não esperar</string>
-    <string name="in_spotlight">No centro</string>
+    <string name="in_spotlight">Em destaque</string>
     <string name="spotlight_rules">%s responde a sério. Os outros adivinham o que escolheu!</string>
     <string name="spotlight_answer">Resposta de %s</string>
     <string name="no_answer">%s não respondeu</string>

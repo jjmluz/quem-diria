@@ -2,6 +2,7 @@
 """Test players that play: they join the TV's room and vote, answer, draw and pick on their own.
 
 Usage: python3 tools/test_players/bots.py <tv host:port> <room code> [number of bots, default 2]
+Names: Robô Rui, Robô Eva and so on, or your own: BOT_NAMES="Sara Margarida,Pedro Henrique" python3 ...
 Stop with Ctrl-C: their phones "go away" and they grey out on the TV.
 Each bot acts 2-8 seconds into each stage, at random. Their drawings are their own selfie.
 """
@@ -15,7 +16,8 @@ import urllib.parse
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-NAMES = ["Robô Rui", "Robô Eva", "Robô Zé", "Robô Ana", "Robô Tó"]
+NAMES = os.environ.get("BOT_NAMES", "").split(",") if os.environ.get("BOT_NAMES") else \
+    ["Robô Rui", "Robô Eva", "Robô Zé", "Robô Ana", "Robô Tó", "Robô Lu", "Robô Gil", "Robô Bia"]
 
 
 def post(url, data, content_type="application/x-www-form-urlencoded"):

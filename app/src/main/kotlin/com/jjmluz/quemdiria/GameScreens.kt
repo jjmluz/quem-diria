@@ -11,10 +11,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
+
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
+
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
@@ -123,15 +125,20 @@ private fun Header(title: String, game: Game, total: Long) {
     }
 }
 
+/**
+ * TV text at [size], shrinking (down to 40%) rather than cutting off when it doesn't fit its space or [lines]:
+ * names and questions vary in length, and the user wants every word visible.
+ */
 @Composable
 private fun Text(text: String, size: TextUnit, colour: Color = TextColour, weight: FontWeight = FontWeight.Normal,
                  align: TextAlign = TextAlign.Start, modifier: Modifier = Modifier, lines: Int = Int.MAX_VALUE) {
     BasicText(
         text,
         modifier = modifier,
-        style = TextStyle(color = colour, fontSize = size, fontWeight = weight, textAlign = align, lineHeight = size * 1.2f),
+        style = TextStyle(color = colour, fontWeight = weight, textAlign = align, lineHeight = 1.2.em),
         maxLines = lines,
         overflow = TextOverflow.Ellipsis,
+        autoSize = TextAutoSize.StepBased(minFontSize = size * 0.4f, maxFontSize = size, stepSize = 1.sp),
     )
 }
 
@@ -415,20 +422,30 @@ private fun EndScreen(room: Room, game: Game) {
     val awards = game.awards(ids).associateBy { it.playerId }
     // The best drawing of each spotlight turn, for the collage.
     val bestDrawings = game.gallery.groupBy { it.spotlightId }.values.mapNotNull { list -> list.maxByOrNull { it.picks } }
+    // The TV is 960 × 540 dp: the winners, every player's award, the collage and the hint all have to fit, for
+    // up to 8 players with long names. Each part gets a fixed share, and its text shrinks to fit that share.
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(40.dp)) {
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    winners.forEach { Box(Modifier.border(5.dp, Yellow, CircleShape).padding(5.dp)) { Avatar(it, 96.dp) } }
-                    val names = winners.joinToString(" & ") { it.name }
-                    Text(
-                        if (winners.size > 1) stringResource(R.string.winners_draw, names) else stringResource(R.string.winner, names),
-                        40.sp, weight = FontWeight.Black, modifier = Modifier.weight(1f), lines = 2,
-                    )
-                }
-                Spacer(Modifier.height(16.dp))
-                AwardList(room, game, awards)
+        Row(
+            Modifier.fillMaxWidth().height(96.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            val side = when {
+                winners.size <= 2 -> 72.dp
+                winners.size <= 4 -> 56.dp
+                else -> 36.dp
             }
+            winners.forEach { Box(Modifier.border(4.dp, Yellow, CircleShape).padding(4.dp)) { Avatar(it, side) } }
+            Spacer(Modifier.width(4.dp))
+            val names = winners.joinToString(" & ") { it.name }
+            Text(
+                if (winners.size > 1) stringResource(R.string.winners_draw, names) else stringResource(R.string.winner, names),
+                40.sp, weight = FontWeight.Black, modifier = Modifier.weight(1f), lines = 3,
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
+            AwardGrid(room, game, awards, Modifier.weight(1f).fillMaxHeight())
             if (bestDrawings.isNotEmpty()) Collage(bestDrawings)
         }
         Spacer(Modifier.height(12.dp))
@@ -441,22 +458,38 @@ private fun EndScreen(room: Room, game: Game) {
     }
 }
 
+/** Every player, best first, with their score and award: one column up to 4 players, two beyond. */
 @Composable
-private fun ColumnScope.AwardList(room: Room, game: Game, awards: Map<Int, Award>) {
+private fun AwardGrid(room: Room, game: Game, awards: Map<Int, Award>, modifier: Modifier) {
     val ranked = room.players.sortedByDescending { game.scores[it.id] ?: 0 }
-    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        ranked.forEach { p ->
-            val award = awards[p.id]
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Avatar(p, 40.dp)
-                Column(Modifier.weight(1f)) {
-                    Row {
-                        Text(p.name, 18.sp, weight = FontWeight.Bold, lines = 1)
-                        Text("  ${game.scores[p.id] ?: 0}", 18.sp, Yellow, FontWeight.Bold)
-                    }
-                    Text(award?.question ?: stringResource(R.string.award_none), 15.sp, Muted, lines = 1)
-                }
+    val columns = if (ranked.size > 4) 2 else 1
+    val rows = (ranked.size + columns - 1) / columns
+    // Fill down the first column, then the second, so the ranking reads top to bottom.
+    val byColumn = ranked.chunked(rows)
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        byColumn.forEach { column ->
+            Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                column.forEach { p -> AwardRow(p, game.scores[p.id] ?: 0, awards[p.id], Modifier.weight(1f)) }
+                // Keep rows the same height in a shorter last column.
+                repeat(rows - column.size) { Spacer(Modifier.weight(1f)) }
             }
+        }
+    }
+}
+
+@Composable
+private fun AwardRow(player: Player, score: Int, award: Award?, modifier: Modifier) {
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Avatar(player, 40.dp)
+        Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.Center) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(player.name, 18.sp, weight = FontWeight.Bold, lines = 1, modifier = Modifier.weight(1f, fill = false))
+                Text("  $score", 18.sp, Yellow, FontWeight.Bold, lines = 1)
+            }
+            Text(
+                award?.question ?: stringResource(R.string.award_none), 15.sp, Muted, lines = 3,
+                modifier = Modifier.weight(1f, fill = false),
+            )
         }
     }
 }
@@ -468,7 +501,7 @@ private fun Collage(drawings: List<Drawing>) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 row.forEach { d ->
                     val image = remember(d.jpeg) { decode(d.jpeg) }
-                    Box(Modifier.size(170.dp).aspectRatio(1f).clip(RoundedCornerShape(14.dp)).background(Card)) {
+                    Box(Modifier.size(140.dp).clip(RoundedCornerShape(14.dp)).background(Card)) {
                         if (image != null) Image(image, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                     }
                 }

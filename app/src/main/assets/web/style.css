@@ -155,7 +155,7 @@ form button[type=submit]:disabled { opacity: 0.5; }
   background: var(--card);
   border-radius: 14px;
 }
-.players li span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.players li span:last-child { min-width: 0; overflow-wrap: anywhere; /* names wrap rather than being cut off */ }
 .players li.away { opacity: 0.45; }
 .players li.you { outline: 2px solid var(--accent); }
 
@@ -180,7 +180,7 @@ form button[type=submit]:disabled { opacity: 0.5; }
 
 /* The game. */
 .game-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.game-name { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.game-name { font-weight: 800; min-width: 0; overflow-wrap: anywhere; /* names wrap rather than being cut off */ }
 .game-score { margin-left: auto; color: var(--muted); white-space: nowrap; font-size: 15px; }
 
 .timer { height: 6px; background: var(--card); border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
@@ -201,7 +201,7 @@ form button[type=submit]:disabled { opacity: 0.5; }
   padding: 10px 12px; text-align: left;
   background: var(--card); border: 2px solid transparent; border-radius: 14px;
 }
-.choice span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.choice span:last-child { min-width: 0; overflow-wrap: anywhere; /* names wrap rather than being cut off */ }
 .choice.option span:last-child { white-space: normal; }
 .choice b {
   flex: none; width: 30px; height: 30px; border-radius: 50%;

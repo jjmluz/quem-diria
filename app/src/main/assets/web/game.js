@@ -23,7 +23,7 @@ Object.assign(STRINGS.pt, {
   pickPlayer: 'Toca num jogador. Podes mudar até o tempo acabar.',
   lookAtTv: 'Olha para a TV!', points: '+{n} pontos', onePoint: '+1 ponto', noPoints: 'Sem pontos desta vez',
   total: '{n} pontos · {rank}', total1: '1 ponto · {rank}', rank1: '1.º', rank2: '2.º', rank3: '3.º', rankN: '{n}.º',
-  youInSpotlight: 'Estás no centro! Responde por ti:',
+  youInSpotlight: 'Estás em destaque! Responde por ti:',
   guessFor: 'Adivinha o que {name} respondeu:',
   beingDrawn: 'Os outros estão a desenhar-te… 😬', drawn: 'Enviado! À espera dos outros.',
   draw: 'Desenha:', send: 'Enviar', undo: 'Desfazer', sendFailed: 'Não foi enviado. Tenta outra vez.',

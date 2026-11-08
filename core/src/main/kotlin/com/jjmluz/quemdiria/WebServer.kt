@@ -112,7 +112,7 @@ class WebServer(
             // fall back to http:// straight away.
             input.mark(1)
             when (input.read()) {
-                -1 -> return
+                -1 -> return log("$from: connected, then closed without a request")
                 TLS_HANDSHAKE -> return log("$from: https attempt, closed")
                 else -> input.reset()
             }
@@ -120,7 +120,8 @@ class WebServer(
         } catch (e: TooLarge) {
             return respond(out, 413, "{\"error\":\"too_large\"}")
         } catch (e: IOException) {
-            return
+            // Includes a phone that connected but sent nothing for 15 s.
+            return log("$from: no request (${e.javaClass.simpleName}: ${e.message})")
         } catch (e: RuntimeException) {
             return respond(out, 400, "")
         }

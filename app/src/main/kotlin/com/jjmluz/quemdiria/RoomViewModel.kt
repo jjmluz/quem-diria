@@ -28,6 +28,9 @@ data class Invite(val host: String) {
 /** The lobby's buttons along the bottom, picked with left and right. */
 enum class LobbyButton { MODE, NARRATOR, START }
 
+/** The pause screen's buttons, picked with left and right. */
+enum class PauseButton { CONTINUE, END }
+
 /**
  * Hosts the room for as long as the game is open: the [Lobby], the [WebServer] the phones talk to, the TV's
  * address on the home network (which can change while the app is open), the game's clock, the remote's
@@ -62,9 +65,9 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     private val _narrator = MutableStateFlow(prefs.getBoolean("narrator", true))
     val narratorOn: StateFlow<Boolean> = _narrator.asStateFlow()
 
-    private val _paused = MutableStateFlow(false)
-    /** Back during a game asks before leaving it. */
-    val paused: StateFlow<Boolean> = _paused.asStateFlow()
+    private val _paused = MutableStateFlow<PauseButton?>(null)
+    /** Back during a game pauses it; null while playing, else the lit button of the pause screen. */
+    val paused: StateFlow<PauseButton?> = _paused.asStateFlow()
 
     private val narrator = Narrator(app, language)
     private val sounds = Sounds()
@@ -90,7 +93,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         lobby.setMode(if (prefs.getString("mode", null) == Mode.ADULTS.name) Mode.ADULTS else Mode.FAMILY)
         viewModelScope.launch {
             while (true) {
-                if (!_paused.value) lobby.tick(System.currentTimeMillis())
+                if (_paused.value == null) lobby.tick(System.currentTimeMillis())
                 delay(200)
             }
         }
@@ -167,18 +170,10 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         }
         val game = room.game ?: return false
         return when {
-            _paused.value && ok -> {
-                _paused.value = false
-                lobby.backToLobby()
-                true
-            }
-            _paused.value && back -> {
-                _paused.value = false
-                lobby.postpone(System.currentTimeMillis() - pausedAt)
-                true
-            }
+            _paused.value != null -> onPausedKey(keyCode, ok, back)
             back -> {
-                _paused.value = true
+                // Continue is lit first, so an OK pressed by habit doesn't end the game.
+                _paused.value = PauseButton.CONTINUE
                 pausedAt = System.currentTimeMillis()
                 narrator.stop()
                 true
@@ -193,6 +188,25 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
             }
             else -> false
         }
+    }
+
+    /** On the pause screen: left and right pick, OK presses, and Back carries on as Continue does. */
+    private fun onPausedKey(keyCode: Int, ok: Boolean, back: Boolean): Boolean {
+        when {
+            keyCode == KeyEvent.KEYCODE_DPAD_LEFT -> _paused.value = PauseButton.CONTINUE
+            keyCode == KeyEvent.KEYCODE_DPAD_RIGHT -> _paused.value = PauseButton.END
+            back || (ok && _paused.value == PauseButton.CONTINUE) -> {
+                _paused.value = null
+                // The clock stood still while paused: push every deadline back by the time it took.
+                lobby.postpone(System.currentTimeMillis() - pausedAt)
+            }
+            ok -> {
+                _paused.value = null
+                lobby.backToLobby()
+            }
+            // Other keys (up, down...) do nothing, but are still the pause screen's.
+        }
+        return true
     }
 
     private fun move(by: Int): Boolean {

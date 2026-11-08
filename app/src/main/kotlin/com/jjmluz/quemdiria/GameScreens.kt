@@ -510,21 +510,36 @@ private fun Collage(drawings: List<Drawing>) {
     }
 }
 
-/** Back during a game: OK leaves for the room, Back carries on. */
+/**
+ * Back during a game: the clock stops, and Continue or End game (back to the room) are picked with left,
+ * right and OK. The QR code is here too, for a player whose phone closed the page: their phone kept
+ * them signed in, so scanning it again puts them straight back in the game.
+ */
 @Composable
-fun PauseOverlay() {
-    Box(Modifier.fillMaxSize().background(Background.copy(alpha = 0.92f)), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(R.string.leave_game), 40.sp, weight = FontWeight.Black)
-            Spacer(Modifier.height(28.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Pill(highlighted = true) {
-                    OkIcon()
-                    Label(stringResource(R.string.leave), TextColour)
-                }
-                Pill {
-                    BackIcon()
-                    Label(stringResource(R.string.keep_playing))
+fun PauseOverlay(button: PauseButton, invite: Invite?) {
+    Box(Modifier.fillMaxSize().background(Background.copy(alpha = 0.97f)), contentAlignment = Alignment.Center) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(64.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.width(300.dp)) {
+                JoinCard(invite, caption = stringResource(R.string.scan_to_return), hint = false)
+            }
+            Column(Modifier.width(380.dp)) {
+                Text(stringResource(R.string.paused), 56.sp, weight = FontWeight.Black)
+                Spacer(Modifier.height(8.dp))
+                Text(stringResource(R.string.paused_clock), 20.sp, Muted)
+                Spacer(Modifier.height(32.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    val onContinue = button == PauseButton.CONTINUE
+                    Pill(highlighted = true, focused = onContinue) {
+                        if (onContinue) OkIcon()
+                        Label(stringResource(R.string.keep_playing), TextColour)
+                    }
+                    Pill(focused = !onContinue) {
+                        if (!onContinue) OkIcon()
+                        Label(stringResource(R.string.end_game), if (onContinue) Muted else TextColour)
+                    }
                 }
             }
         }

@@ -39,7 +39,9 @@
     <string name="winner">%s wins!</string>
     <string name="winners_draw">A draw! %s</string>
     <string name="award_none">A mystery: nobody picked them all game</string>
-    <string name="leave_game">Leave this game?</string>
-    <string name="leave">Leave</string>
-    <string name="keep_playing">Keep playing</string>
+    <string name="paused">Paused</string>
+    <string name="paused_clock">The clock has stopped.</string>
+    <string name="keep_playing">Continue</string>
+    <string name="end_game">End game</string>
+    <string name="scan_to_return">Closed the page? Scan to get back into the game</string>
 </resources>

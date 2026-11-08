@@ -78,7 +78,7 @@ fun QuemDiriaApp(viewModel: RoomViewModel) {
         val game = room.game
         if (room.phase == Phase.GAME && game != null) {
             GameScreen(room, game)
-            if (paused) PauseOverlay()
+            paused?.let { PauseOverlay(it, invite) }
         } else {
             LobbyScreen(room, invite, button, narrator)
         }
@@ -140,9 +140,12 @@ private fun LobbyScreen(room: Room, invite: Invite?, button: LobbyButton, narrat
     }
 }
 
-/** The QR code that opens the phone page, with the address to type for a phone that can't scan. */
+/**
+ * The QR code that opens the phone page, with the address to type for a phone that can't scan.
+ * [caption] says what scanning it is for; [hint] adds the fix for phones that can't reach the TV.
+ */
 @Composable
-private fun JoinCard(invite: Invite?) {
+fun JoinCard(invite: Invite?, caption: String = stringResource(R.string.scan_to_join), hint: Boolean = true) {
     Column(
         Modifier.fillMaxWidth().background(Card, RoundedCornerShape(20.dp)).padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -160,7 +163,7 @@ private fun JoinCard(invite: Invite?) {
         }
         Spacer(Modifier.height(14.dp))
         BasicText(
-            stringResource(R.string.scan_to_join),
+            caption,
             style = TextStyle(color = TextColour, fontSize = 18.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
         )
         Spacer(Modifier.height(8.dp))
@@ -171,6 +174,7 @@ private fun JoinCard(invite: Invite?) {
     }
     // Android 17 asks before an app reaches devices at home. If Chrome was refused, the page fails with
     // ERR_TOO_MANY_RETRIES and the TV never hears from the phone, so the fix can only be shown here.
+    if (!hint) return
     Spacer(Modifier.height(10.dp))
     BasicText(
         stringResource(R.string.local_network_hint),

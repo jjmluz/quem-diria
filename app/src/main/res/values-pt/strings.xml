@@ -38,7 +38,9 @@
     <string name="winner">%s ganha!</string>
     <string name="winners_draw">Empate! %s</string>
     <string name="award_none">Um mistério: ninguém votou nesta pessoa</string>
-    <string name="leave_game">Sair deste jogo?</string>
-    <string name="leave">Sair</string>
+    <string name="paused">Em pausa</string>
+    <string name="paused_clock">O tempo está parado.</string>
     <string name="keep_playing">Continuar</string>
+    <string name="end_game">Terminar o jogo</string>
+    <string name="scan_to_return">Fechaste a página? Lê com a câmara para voltar ao jogo</string>
 </resources>

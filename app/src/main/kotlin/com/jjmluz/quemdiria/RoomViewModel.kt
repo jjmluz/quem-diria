@@ -71,6 +71,9 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
 
     private val narrator = Narrator(app, language)
     private val sounds = Sounds()
+    private val music = TitleMusic(app, viewModelScope)
+    /** Whether the app is on screen: the music stops when the TV goes elsewhere. */
+    private var foreground = false
 
     private val connectivity = app.getSystemService(ConnectivityManager::class.java)
     private var port = 0
@@ -111,6 +114,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Sounds and the narrator, on each new stage and on each answer coming in. */
     private fun react(room: Room) {
+        updateMusic()
         val game = room.game
         if (game == null) {
             lastSerial = -1
@@ -150,6 +154,15 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
             Stage.END -> sounds.play(Sounds.Kind.FANFARE)
         }
     }
+
+    /** The activity is on screen (true) or not: the music plays only while it is. */
+    fun onForeground(shown: Boolean) {
+        foreground = shown
+        updateMusic()
+    }
+
+    /** Music in the room only: the game has the narrator and its own sounds. */
+    private fun updateMusic() = music.play(foreground && room.value.phase == Phase.LOBBY)
 
     /** What the remote's keys do. Returns true for a key it used. */
     fun onKeyDown(keyCode: Int): Boolean {
@@ -270,6 +283,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         server.stop()
         narrator.shutdown()
         sounds.release()
+        music.release()
     }
 
     private companion object {

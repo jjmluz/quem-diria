@@ -3,6 +3,35 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+/**
+ * Copies the title music (`raquel.ogg` at the project root) into the app's assets as `music/title.ogg`,
+ * when it's there. The track isn't ours to share, so it's kept out of git; without it the room is quiet.
+ */
+abstract class CopyTitleMusic : DefaultTask() {
+    @get:InputFiles
+    abstract val music: ConfigurableFileCollection
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        val out = outputDir.get().asFile
+        out.deleteRecursively()
+        music.files.filter { it.isFile }.forEach { it.copyTo(out.resolve("music/title.ogg"), overwrite = true) }
+    }
+}
+
+val copyTitleMusic = tasks.register<CopyTitleMusic>("copyTitleMusic") {
+    music.from(rootProject.file("raquel.ogg"))
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(copyTitleMusic, CopyTitleMusic::outputDir)
+    }
+}
+
 android {
     namespace = "com.jjmluz.quemdiria"
     compileSdk = 37
@@ -39,6 +68,8 @@ android {
         generateLocaleConfig = true
         // Leaves out the libraries' other translations, which the game's own text doesn't have.
         localeFilters += listOf("en", "pt")
+        // Stored as is, so the music can be played straight from the APK.
+        noCompress += "ogg"
     }
 }
 

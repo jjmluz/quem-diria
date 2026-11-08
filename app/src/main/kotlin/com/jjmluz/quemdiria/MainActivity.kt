@@ -17,6 +17,16 @@ class MainActivity : ComponentActivity() {
         setContent { QuemDiriaApp(viewModel) }
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.onForeground(true)
+    }
+
+    override fun onStop() {
+        viewModel.onForeground(false)
+        super.onStop()
+    }
+
     // Keys go straight to the view model: nothing on screen is focusable. A used key's release is
     // swallowed too, so Back that took us to the lobby doesn't also close the app.
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

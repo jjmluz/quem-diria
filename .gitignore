@@ -7,6 +7,9 @@ local.properties
 .DS_Store
 bin/
 
+# Title music: the family's own track, not ours to share. The build bundles it when it's there.
+/raquel.ogg
+
 # Local notes for coding agents: they describe this home setup (addresses, devices), so they stay out of git.
 AGENTS.md
 CLAUDE.md

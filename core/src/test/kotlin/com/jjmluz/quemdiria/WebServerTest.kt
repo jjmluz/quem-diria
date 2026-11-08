@@ -227,6 +227,14 @@ class WebServerTest {
         assertContains(state, "\"stage\":\"VOTE\"")
         assertContains(state, "\"question\":\"Who sings?\"")
         assertContains(state, "\"voted\":null")
+        assertContains(state, "\"paused\":false")
+
+        // Paused from the TV: phones are told, and their votes wait for the game to carry on.
+        lobby.pause(System.currentTimeMillis())
+        assertContains(call("GET", "/api/me?t=$ana").text, "\"paused\":true")
+        assertEquals(409, call("POST", "/api/vote?t=$ana", form("target" to ids[1].toString())).status)
+        lobby.resume(System.currentTimeMillis())
+        assertContains(call("GET", "/api/me?t=$ana").text, "\"paused\":false")
 
         assertEquals(204, call("POST", "/api/vote?t=$ana", form("target" to ids[1].toString())).status)
         assertContains(call("GET", "/api/me?t=$ana").text, "\"voted\":${ids[1]}")

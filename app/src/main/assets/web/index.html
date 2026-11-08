@@ -47,6 +47,12 @@
   <section id="game" hidden></section>
 </main>
 
+<!-- Over the game while the TV is paused, so nobody answers into a stopped clock. -->
+<div class="paused" id="paused" hidden>
+  <p class="paused-title" data-t="paused"></p>
+  <p data-t="pausedHint"></p>
+</div>
+
 <p class="offline" id="offline" hidden data-t="reconnecting"></p>
 
 <script src="app.js"></script>

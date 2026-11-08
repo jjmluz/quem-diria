@@ -93,7 +93,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         lobby.setMode(if (prefs.getString("mode", null) == Mode.ADULTS.name) Mode.ADULTS else Mode.FAMILY)
         viewModelScope.launch {
             while (true) {
-                if (_paused.value == null) lobby.tick(System.currentTimeMillis())
+                lobby.tick(System.currentTimeMillis())
                 delay(200)
             }
         }
@@ -106,7 +106,6 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         _invite.value = if (ip != null && port != 0) Invite("${ip.hostAddress}:$port") else null
     }
 
-    private var pausedAt = 0L
     private var lastSerial = -1
     private var lastAnswers = 0
 
@@ -174,7 +173,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
             back -> {
                 // Continue is lit first, so an OK pressed by habit doesn't end the game.
                 _paused.value = PauseButton.CONTINUE
-                pausedAt = System.currentTimeMillis()
+                lobby.pause(System.currentTimeMillis())
                 narrator.stop()
                 true
             }
@@ -197,8 +196,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
             keyCode == KeyEvent.KEYCODE_DPAD_RIGHT -> _paused.value = PauseButton.END
             back || (ok && _paused.value == PauseButton.CONTINUE) -> {
                 _paused.value = null
-                // The clock stood still while paused: push every deadline back by the time it took.
-                lobby.postpone(System.currentTimeMillis() - pausedAt)
+                lobby.resume(System.currentTimeMillis())
             }
             ok -> {
                 _paused.value = null

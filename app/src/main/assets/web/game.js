@@ -41,6 +41,8 @@ const PEN_SIZES = [6, 16];
 let gameKey = '';
 let deadline = 0;
 let timerFrame = 0;
+let timerTotal = 0;
+let timerPaused = false;
 // The drawing in progress, kept across updates of the same stage.
 let pad = null;
 
@@ -79,7 +81,9 @@ function renderGame(room) {
   const g = room.game;
   const key = [g.serial, g.voted, g.answered, g.drew, g.picked, g.score].join('|');
   deadline = g.remaining ? Date.now() + g.remaining : 0;
-  if (key === gameKey) return;
+  timerPaused = g.paused;
+  // The same screen: just the timer, which stops while paused and runs again after.
+  if (key === gameKey) { runTimer(); return; }
   const newStage = !gameKey.startsWith(g.serial + '|');
   gameKey = key;
   if (newStage && ['VOTE', 'ANSWER', 'DRAW', 'PICK'].includes(g.stage) && navigator.vibrate) navigator.vibrate(60);
@@ -116,14 +120,20 @@ function face(player) {
 }
 
 function startTimer(total) {
+  timerTotal = total;
+  runTimer();
+}
+
+/** Draws the timer bar, and keeps it moving unless the game is paused (then the bar stands still). */
+function runTimer() {
   cancelAnimationFrame(timerFrame);
   const bar = $('timer-bar');
   if (!bar || !deadline) return;
   const tick = () => {
     const left = Math.max(0, deadline - Date.now());
-    bar.style.width = (100 * left / Math.max(total, 1)) + '%';
+    bar.style.width = (100 * left / Math.max(timerTotal, 1)) + '%';
     bar.classList.toggle('hurry', left < 5000);
-    if (left > 0) timerFrame = requestAnimationFrame(tick);
+    if (left > 0 && !timerPaused) timerFrame = requestAnimationFrame(tick);
   };
   tick();
 }

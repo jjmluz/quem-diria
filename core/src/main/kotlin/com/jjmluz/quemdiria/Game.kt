@@ -57,6 +57,8 @@ data class Game(
     val picks: Map<Int, Int> = emptyMap(),
     val tallies: List<Tally> = emptyList(),
     val gallery: List<Drawing> = emptyList(),
+    /** When Back paused the game, or null while it's playing. The clock stands still meanwhile. */
+    val pausedAt: Long? = null,
     private val seed: Long = 0,
 ) {
     val step: Step? get() = steps.getOrNull(index)
@@ -70,34 +72,49 @@ data class Game(
             return steps.take(index + 1).count { it is Step.Vote } to all.size
         }
 
+    val paused: Boolean get() = pausedAt != null
+
+    /** The stage's time left at [now], frozen while paused; 0 for stages without a deadline. */
+    fun remaining(now: Long): Long = if (deadline == 0L) 0 else (deadline - (pausedAt ?: now)).coerceAtLeast(0)
+
+    /** Stops the clock; null if already paused. Phones can't answer until [resume]. */
+    fun pause(now: Long): Game? = if (paused) null else copy(pausedAt = now)
+
+    /** Starts the clock again, with the stage's end pushed back by the time it was paused. */
+    fun resume(now: Long): Game? {
+        val at = pausedAt ?: return null
+        return copy(pausedAt = null, deadline = if (deadline == 0L) 0 else deadline + (now - at).coerceAtLeast(0))
+    }
+
     fun vote(voter: Int, target: Int, present: Set<Int>): Game? {
-        if (stage != Stage.VOTE || target !in present || voter !in present) return null
+        if (paused || stage != Stage.VOTE || target !in present || voter !in present) return null
         return copy(votes = votes + (voter to target))
     }
 
     fun answer(player: Int, option: Int, present: Set<Int>): Game? {
-        if (stage != Stage.ANSWER || option !in 0..3 || player !in present) return null
+        if (paused || stage != Stage.ANSWER || option !in 0..3 || player !in present) return null
         return copy(answers = answers + (player to option))
     }
 
     fun draw(player: Int, jpeg: ByteArray, present: Set<Int>): Game? {
-        if (stage != Stage.DRAW || player == spotlightId || player !in present) return null
+        if (paused || stage != Stage.DRAW || player == spotlightId || player !in present) return null
         return copy(drawings = drawings + (player to jpeg))
     }
 
     fun pick(player: Int, drawer: Int, present: Set<Int>): Game? {
-        if (stage != Stage.PICK || drawer == player || drawer !in drawings || player !in present) return null
+        if (paused || stage != Stage.PICK || drawer == player || drawer !in drawings || player !in present) return null
         return copy(picks = picks + (player to drawer))
     }
 
     /** Moves on if the stage's time is up or everyone [active] has answered; null if nothing changes. */
     fun tick(now: Long, active: Set<Int>, present: Set<Int>): Game? {
+        if (paused) return null
         val due = deadline != 0L && now >= deadline
         return if (due || everyoneDone(active, present)) finish(now, present) else null
     }
 
     /** Ends the stage now (OK on the remote): stops waiting for answers, or skips a reveal. */
-    fun skip(now: Long, present: Set<Int>): Game? = if (stage == Stage.END) null else finish(now, present)
+    fun skip(now: Long, present: Set<Int>): Game? = if (paused || stage == Stage.END) null else finish(now, present)
 
     private fun everyoneDone(active: Set<Int>, present: Set<Int>): Boolean {
         val waiting = active.intersect(present)

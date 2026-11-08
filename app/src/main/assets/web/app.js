@@ -17,6 +17,7 @@ const STRINGS = {
     errNetwork: 'Can’t reach the TV. Are you on the same Wi-Fi?',
     errSelfie: 'That photo didn’t work. Try again.',
     errRestarted: 'The TV started a new game. Join again.',
+    paused: 'Paused', pausedHint: 'The game carries on when the TV does.',
   },
   pt: {
     yourName: 'O teu nome', join: 'Entrar', takeSelfie: 'Tirar uma selfie', newSelfie: 'Nova selfie',
@@ -32,6 +33,7 @@ const STRINGS = {
     errNetwork: 'Não consigo chegar à TV. Estás na mesma rede Wi-Fi?',
     errSelfie: 'Essa foto não deu. Tenta outra vez.',
     errRestarted: 'A TV começou um jogo novo. Entra outra vez.',
+    paused: 'Em pausa', pausedHint: 'O jogo continua quando a TV continuar.',
   },
 };
 // The TV sets <html lang> to its own language, so every phone in the room reads the same one.
@@ -150,6 +152,7 @@ function avatar(el, player, big) {
 }
 
 function draw() {
+  $('paused').hidden = !(room.phase === 'GAME' && room.game && room.game.paused);
   if (room.phase === 'GAME') { show('game'); renderGame(room); return; }
   leaveGame();
   show('room');

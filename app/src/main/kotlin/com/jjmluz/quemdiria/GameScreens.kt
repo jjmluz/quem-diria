@@ -95,7 +95,8 @@ private fun TimerRing(game: Game, total: Long, size: Dp = 64.dp) {
             delay(100)
         }
     }
-    val left = (game.deadline - now).coerceAtLeast(0)
+    // Paused: game.remaining ignores the clock, so the ring stands still too.
+    val left = game.remaining(now)
     val fraction = (left.toFloat() / total).coerceIn(0f, 1f)
     val colour = if (left < 5_000) Yellow else Accent
     Box(Modifier.size(size), contentAlignment = Alignment.Center) {

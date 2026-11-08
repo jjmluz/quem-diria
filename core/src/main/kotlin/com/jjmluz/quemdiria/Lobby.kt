@@ -173,12 +173,17 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS) {
         publish()
     }
 
-    /** Pushes the stage's end back by [ms], after the game was paused for that long. */
+    /** Back on the remote: stops the game's clock, and phones show that it's paused. */
     @Synchronized
-    fun postpone(ms: Long) {
-        val g = game ?: return
-        if (g.deadline == 0L) return
-        game = g.copy(deadline = g.deadline + ms)
+    fun pause(now: Long) {
+        game = game?.pause(now) ?: return
+        publish()
+    }
+
+    /** Carries on from where [pause] stopped, with the same time left. */
+    @Synchronized
+    fun resume(now: Long) {
+        game = game?.resume(now) ?: return
         publish()
     }
 

@@ -382,7 +382,8 @@ class WebServer(
 
         /**
          * What a phone sees: the room, which player it is and, during a game, the stage from its point of
-         * view. Selfies go by version (0: none yet). `remaining` is the stage's time left when this was sent.
+         * view. Selfies go by version (0: none yet). `remaining` is the stage's time left when this was sent;
+         * while `paused`, it stays put and the phone's timer stands still.
          */
         fun stateJson(room: Room, you: Int, now: Long): String = buildString {
             append("{\"phase\":\"").append(room.phase.name).append("\",\"you\":").append(you)
@@ -407,7 +408,8 @@ class WebServer(
             val (number, of) = game.voteNumber
             append("{\"stage\":\"").append(game.stage.name).append('"')
             append(",\"serial\":").append(game.serial)
-            append(",\"remaining\":").append(if (game.deadline == 0L) 0 else (game.deadline - now).coerceAtLeast(0))
+            append(",\"remaining\":").append(game.remaining(now))
+            append(",\"paused\":").append(game.paused)
             append(",\"double\":").append(game.double)
             append(",\"number\":").append(number).append(",\"of\":").append(of)
             append(",\"spotlight\":").append(spotlight ?: "null")

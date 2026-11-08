@@ -76,6 +76,26 @@ class GameTest {
 
     private val all = setOf(1, 2, 3, 4)
 
+    @Test
+    fun pausingStopsTheClockAndTheAnswers() {
+        val g = voteGame()
+        val left = g.remaining(1_000)
+        val paused = assertNotNull(g.pause(1_000))
+        assertNull(paused.pause(2_000), "already paused")
+        // Long after the deadline: nothing moves, nobody can vote, and the time left stays put.
+        val late = g.deadline + 60_000
+        assertEquals(left, paused.remaining(late))
+        assertNull(paused.tick(late, all, all))
+        assertNull(paused.skip(late, all))
+        assertNull(paused.vote(1, 2, all))
+        // Resumed a minute later: the same time left as when it paused, counting down again.
+        val resumed = assertNotNull(paused.resume(61_000))
+        assertNull(resumed.resume(62_000), "not paused")
+        assertEquals(left, resumed.remaining(61_000))
+        assertEquals(left - 500, resumed.remaining(61_500))
+        assertNotNull(resumed.vote(1, 2, all))
+    }
+
     private fun voteGame() = Game.start(listOf(Step.Vote(Item("v", "Who?")), Step.Scores), now = 0, present = all)
 
     @Test

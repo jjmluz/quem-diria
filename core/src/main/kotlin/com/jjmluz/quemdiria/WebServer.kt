@@ -36,6 +36,8 @@ class WebServer(
     private val lobby: Lobby,
     val code: String = newCode(),
     private val log: (String) -> Unit = {},
+    /** The same clock the game's deadlines use, to tell phones how long a stage has left. */
+    private val clock: () -> Long = System::currentTimeMillis,
     private val asset: (String) -> ByteArray?,
 ) {
     private var server: ServerSocket? = null
@@ -66,6 +68,9 @@ class WebServer(
                             handle(it)
                             closeGently(it)
                         }
+                    } catch (e: Exception) {
+                        // One bad request must never take the TV's game down with it.
+                        log("request failed: ${e.javaClass.simpleName}: ${e.message}")
                     } finally {
                         clients -= client
                     }
@@ -133,8 +138,22 @@ class WebServer(
                 events(out, token)
             }
             request.method == "GET" && request.path == "/api/me" ->
-                lobby.playerFor(token)?.let { respond(out, 200, stateJson(lobby.room.value, it.id)) }
+                lobby.playerFor(token)?.let { respond(out, 200, stateJson(lobby.room.value, it.id, clock())) }
                     ?: respond(out, 401, "")
+            request.method == "POST" && request.path in ACTIONS -> {
+                if (lobby.playerFor(token) == null) return respond(out, 401, "")
+                // A drawing's body is a JPEG, not a form: only read forms for the other actions.
+                val form = if (request.path == "/api/drawing") emptyMap() else request.form()
+                val done = when (request.path) {
+                    "/api/vote" -> form["target"]?.toIntOrNull()?.let { lobby.vote(token, it) }
+                    "/api/answer" -> form["option"]?.toIntOrNull()?.let { lobby.answer(token, it) }
+                    "/api/pick" -> form["drawer"]?.toIntOrNull()?.let { lobby.pick(token, it) }
+                    else -> if (isJpeg(request.body)) lobby.draw(token, request.body) else null
+                }
+                // 409: too late (the stage moved on) or not allowed, such as picking your own drawing.
+                respond(out, if (done == true) 204 else 409, "")
+            }
+            request.method == "GET" && request.path.startsWith("/drawing/") -> drawing(out, request)
             request.method == "POST" && request.path == "/api/join" -> join(out, request.form())
             request.method == "POST" && request.path == "/api/name" -> {
                 if (lobby.playerFor(token) == null) return respond(out, 401, "")
@@ -201,7 +220,7 @@ class WebServer(
                         out.flush()
                         throw SocketException("left")
                     }
-                    out.write("data: ${stateJson(room, player.id)}\n\n".toByteArray(Charsets.UTF_8))
+                    out.write("data: ${stateJson(room, player.id, clock())}\n\n".toByteArray(Charsets.UTF_8))
                     out.flush()
                 }
             }
@@ -218,6 +237,15 @@ class WebServer(
         val jpeg = lobby.room.value.players.firstOrNull { it.id == id }?.selfie ?: return respond(out, 404, "")
         // The URL carries the selfie's version, so a new selfie gets a new URL and this one never changes.
         respond(out, 200, jpeg, "image/jpeg", "Cache-Control: max-age=86400\r\n")
+    }
+
+    /** A drawing of the current spotlight turn, for the phones' gallery. Anonymous until the reveal. */
+    private fun drawing(out: OutputStream, request: Request) {
+        if (request.query["c"]?.uppercase() != code) return respond(out, 403, "")
+        val id = request.path.removePrefix("/drawing/").toIntOrNull()
+        val jpeg = lobby.room.value.game?.drawings?.get(id) ?: return respond(out, 404, "")
+        // The URL carries the stage's serial, so the same address never means another drawing.
+        respond(out, 200, jpeg, "image/jpeg", "Cache-Control: max-age=3600\r\n")
     }
 
     private fun page(out: OutputStream, path: String) {
@@ -317,6 +345,7 @@ class WebServer(
 
     companion object {
         const val DEFAULT_PORT = 8642
+        private val ACTIONS = setOf("/api/vote", "/api/answer", "/api/drawing", "/api/pick")
         const val HEARTBEAT_MS = 15_000L
         private const val MAX_HEAD = 16 * 1024
         private const val MAX_DRAIN = 64 * 1024
@@ -343,12 +372,23 @@ class WebServer(
             query.split('&').filter { it.isNotEmpty() }.associate { pair ->
                 val key = pair.substringBefore('=')
                 val value = pair.substringAfter('=', "")
-                URLDecoder.decode(key, "UTF-8") to URLDecoder.decode(value, "UTF-8")
+                decode(key) to decode(value)
             }
 
-        /** What a phone sees: the room, and which player it is. Selfies go by version; 0 means none yet. */
-        fun stateJson(room: Room, you: Int): String = buildString {
+        /** Percent-decoding that leaves a malformed escape as it is instead of throwing. */
+        private fun decode(text: String): String = try {
+            URLDecoder.decode(text, "UTF-8")
+        } catch (e: IllegalArgumentException) {
+            text
+        }
+
+        /**
+         * What a phone sees: the room, which player it is and, during a game, the stage from its point of
+         * view. Selfies go by version (0: none yet). `remaining` is the stage's time left when this was sent.
+         */
+        fun stateJson(room: Room, you: Int, now: Long): String = buildString {
             append("{\"phase\":\"").append(room.phase.name).append("\",\"you\":").append(you)
+            append(",\"mode\":\"").append(room.mode.name).append('"')
             append(",\"canStart\":").append(room.canStart)
             append(",\"min\":").append(Lobby.MIN_PLAYERS).append(",\"max\":").append(Lobby.MAX_PLAYERS)
             append(",\"players\":[")
@@ -358,7 +398,50 @@ class WebServer(
                 append(",\"colour\":").append(p.colour).append(",\"selfie\":").append(p.selfieVersion)
                 append(",\"connected\":").append(p.connected).append('}')
             }
-            append("]}")
+            append("]")
+            room.game?.let { append(",\"game\":"); gameJson(it, room, you, now) }
+            append("}")
+        }
+
+        private fun StringBuilder.gameJson(game: Game, room: Room, you: Int, now: Long) {
+            val spotlight = game.spotlightId
+            val name = room.player(spotlight)?.name.orEmpty()
+            val (number, of) = game.voteNumber
+            append("{\"stage\":\"").append(game.stage.name).append('"')
+            append(",\"serial\":").append(game.serial)
+            append(",\"remaining\":").append(if (game.deadline == 0L) 0 else (game.deadline - now).coerceAtLeast(0))
+            append(",\"double\":").append(game.double)
+            append(",\"number\":").append(number).append(",\"of\":").append(of)
+            append(",\"spotlight\":").append(spotlight ?: "null")
+            when (val step = game.step) {
+                is Step.Vote -> append(",\"question\":").append(jsonString(step.question.text))
+                is Step.Spotlight -> {
+                    val drawing = game.stage in setOf(Stage.DRAW, Stage.PICK, Stage.PICK_REVEAL)
+                    val text = if (drawing) step.prompt.text else step.question.text
+                    append(",\"question\":").append(jsonString(text.withName(name)))
+                    append(",\"options\":[").append(step.question.options.joinToString(",") { jsonString(it) }).append(']')
+                }
+                else -> {}
+            }
+            append(",\"voted\":").append(game.votes[you] ?: "null")
+            append(",\"answered\":").append(game.answers[you] ?: "null")
+            if (game.stage == Stage.ANSWER_REVEAL) append(",\"truth\":").append(game.answers[spotlight] ?: "null")
+            append(",\"drew\":").append(you in game.drawings)
+            append(",\"picked\":").append(game.picks[you] ?: "null")
+            append(",\"drawers\":[").append(game.galleryOrder.joinToString(",")).append(']')
+            append(",\"gained\":").append(game.gained[you] ?: 0)
+            val score = game.scores[you] ?: 0
+            append(",\"score\":").append(score)
+            append(",\"rank\":").append(1 + room.players.count { (game.scores[it.id] ?: 0) > score })
+            if (game.stage == Stage.END) {
+                val ids = room.players.map { it.id }
+                game.awards(ids).firstOrNull { it.playerId == you }?.let {
+                    append(",\"award\":{\"question\":").append(it.question?.let(::jsonString) ?: "null")
+                    append(",\"votes\":").append(it.votes).append('}')
+                }
+                append(",\"winners\":[").append(game.winners(ids).joinToString(",")).append(']')
+            }
+            append('}')
         }
 
         fun jsonString(s: String): String = buildString {

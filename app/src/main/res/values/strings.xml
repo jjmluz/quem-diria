@@ -10,6 +10,36 @@
         <item quantity="other">%d more players needed</item>
     </plurals>
     <string name="start">Start the game</string>
-    <string name="coming_soon">Everyone\'s in! The rounds are coming soon.</string>
     <string name="back_to_lobby">Back to the room</string>
+    <string name="mode_family">Questions: family</string>
+    <string name="mode_adults">Questions: adults</string>
+    <string name="narrator_on">Narrator on</string>
+    <string name="narrator_off">Narrator off</string>
+    <string name="narrator_hello">Hello! I\'ll read the questions.</string>
+    <string name="question_of">Question %1$d of %2$d</string>
+    <string name="final_round">Final round · double points</string>
+    <string name="vote_on_phones">Vote on your phones</string>
+    <string name="next">Next</string>
+    <string name="dont_wait">Don\'t wait</string>
+    <string name="in_spotlight">In the spotlight</string>
+    <string name="spotlight_rules">%s answers for real. Everyone else, guess what they picked!</string>
+    <string name="spotlight_answer">%s\'s answer</string>
+    <string name="no_answer">%s didn\'t answer</string>
+    <string name="draw_label">Draw</string>
+    <string name="draw_on_phones">Everyone except %s, draw on your phones!</string>
+    <string name="pick_best">Vote for the best drawing</string>
+    <string name="drawing_by">by %s</string>
+    <plurals name="votes">
+        <item quantity="one">%d vote</item>
+        <item quantity="other">%d votes</item>
+    </plurals>
+    <string name="scores">Scores</string>
+    <string name="final_title">Final round</string>
+    <string name="final_subtitle">Points count double!</string>
+    <string name="winner">%s wins!</string>
+    <string name="winners_draw">A draw! %s</string>
+    <string name="award_none">A mystery: nobody picked them all game</string>
+    <string name="leave_game">Leave this game?</string>
+    <string name="leave">Leave</string>
+    <string name="keep_playing">Keep playing</string>
 </resources>

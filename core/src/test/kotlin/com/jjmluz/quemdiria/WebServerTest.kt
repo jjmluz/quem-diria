@@ -206,6 +206,59 @@ class WebServerTest {
         }
     }
 
+    private val deck = Deck(
+        listOf(Item("v1", "Who sings?")),
+        listOf(SpotlightItem("s1", "{name} at a party?", listOf("a", "b", "c", "d"))),
+        listOf(Item("d1", "Draw {name} as a cat")),
+    )
+
+    @Test
+    fun playingThroughTheServer() {
+        val ana = join("Ana")
+        val rui = join("Rui")
+        val eva = join("Eva")
+        val ids = listOf(ana, rui, eva).map { lobby.idFor(it)!! }
+        assertTrue(lobby.start(deck, now = System.currentTimeMillis()))
+
+        val state = call("GET", "/api/me?t=$ana").text
+        assertContains(state, "\"phase\":\"GAME\"")
+        assertContains(state, "\"stage\":\"VOTE\"")
+        assertContains(state, "\"question\":\"Who sings?\"")
+        assertContains(state, "\"voted\":null")
+
+        assertEquals(204, call("POST", "/api/vote?t=$ana", form("target" to ids[1].toString())).status)
+        assertContains(call("GET", "/api/me?t=$ana").text, "\"voted\":${ids[1]}")
+        assertEquals(409, call("POST", "/api/vote?t=$ana", form("target" to "999")).status)
+        assertEquals(409, call("POST", "/api/answer?t=$ana", form("option" to "1")).status)
+        assertEquals(401, call("POST", "/api/vote?t=nope", form("target" to ids[1].toString())).status)
+    }
+
+    @Test
+    fun drawingsGoUpAndShowInTheGallery() {
+        val tokens = listOf(join("Ana"), join("Rui"), join("Eva"))
+        val ids = tokens.map { lobby.idFor(it)!! }
+        lobby.start(deck, now = 0)
+        // Skip to the spotlight turn's drawing stage.
+        while (lobby.room.value.game!!.stage != Stage.DRAW) lobby.skip(0)
+        val spotlight = lobby.room.value.game!!.spotlightId!!
+        val name = lobby.room.value.player(spotlight)!!.name
+        val drawers = tokens.filter { lobby.idFor(it) != spotlight }
+        val jpeg = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), '%'.code.toByte(), 0xE0.toByte(), 7)
+        assertContains(call("GET", "/api/me?t=${drawers[0]}").text, "\"question\":\"Draw $name as a cat\"")
+        drawers.forEach { assertEquals(204, call("POST", "/api/drawing?t=$it", jpeg, "image/jpeg").status) }
+        val spotlightToken = tokens.first { lobby.idFor(it) == spotlight }
+        assertEquals(409, call("POST", "/api/drawing?t=$spotlightToken", jpeg, "image/jpeg").status)
+
+        lobby.skip(0)
+        assertEquals(Stage.PICK, lobby.room.value.game!!.stage)
+        val drawer = lobby.idFor(drawers[0])!!
+        assertContentEquals(jpeg, call("GET", "/drawing/$drawer?c=AB23&s=1").body)
+        assertEquals(403, call("GET", "/drawing/$drawer?c=NOPE").status)
+        assertEquals(409, call("POST", "/api/pick?t=${drawers[0]}", form("drawer" to drawer.toString())).status)
+        assertEquals(204, call("POST", "/api/pick?t=$spotlightToken", form("drawer" to drawer.toString())).status)
+        assertTrue(ids.isNotEmpty())
+    }
+
     @Test
     fun anUnknownTokenGetsNoStream() {
         assertEquals(401, call("GET", "/api/events?t=nope").status)

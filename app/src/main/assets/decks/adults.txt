@@ -1,0 +1,191 @@
+# Quem Diria? — adults' questions: cheeky (dating, drinking, money, embarrassing stories, mild innuendo) and
+# spicy (frank about sex and relationships, with swearing), but nothing graphic.
+# Format: see Deck.parse in core/.../Deck.kt. {name} is the player in the spotlight.
+# Portuguese is from Portugal; it avoids gendered words where it can, since players can be anyone.
+
+[vote]
+# Cheeky
+a001 | Who would text their ex after two drinks? | Quem mandaria mensagem ao ex depois de dois copos?
+a002 | Who has the most embarrassing search history? | Quem tem o histórico de pesquisa mais vergonhoso?
+a003 | Who would spend their rent money on a holiday? | Quem gastaria o dinheiro da renda numas férias?
+a004 | Who is the worst drunk? | Quem tem a pior bebedeira?
+a005 | Who would flirt their way out of a parking ticket? | Quem se livraria de uma multa à base de charme?
+a006 | Who has ghosted the most people? | Quem já deu mais "ghosting"?
+a007 | Who would go on a dating show? | Quem iria a um programa de encontros na televisão?
+a008 | Who would order the most expensive wine to impress a date? | Quem pediria o vinho mais caro para impressionar num encontro?
+a009 | Who is most likely to wake up somewhere they don't recognise? | Quem acordaria num sítio que não reconhece?
+a010 | Who has the most secret social media account? | Quem tem uma conta secreta nas redes sociais?
+a011 | Who would lie about their age on a dating app? | Quem mentiria sobre a idade numa app de encontros?
+a012 | Who is the biggest gossip? | Quem gosta mais de coscuvilhar?
+a013 | Who would sing karaoke at 3 a.m.? | Quem cantaria karaoke às três da manhã?
+a014 | Who would get banned from a bar? | Quem seria expulso de um bar?
+a015 | Who would pay for everything on a first date? | Quem pagaria tudo num primeiro encontro?
+a016 | Who would split the bill down to the cent? | Quem dividiria a conta ao cêntimo?
+a017 | Who has the worst taste in partners? | Quem tem o pior gosto para namoros?
+a018 | Who would fall in love on holiday? | Quem se apaixonaria nas férias?
+a019 | Who would cry at their own wedding? | Quem choraria no próprio casamento?
+a020 | Who would get a tattoo of a partner's name? | Quem tatuaria o nome de uma paixão?
+a021 | Who would forget an anniversary? | Quem se esqueceria de um aniversário de namoro?
+a022 | Who has the most chaotic group chats? | Quem tem os grupos de mensagens mais caóticos?
+a023 | Who would hide a shopping bag from their partner? | Quem esconderia um saco de compras da cara-metade?
+a024 | Who would still be dancing when the lights come on? | Quem ainda estaria a dançar quando acendem as luzes?
+a025 | Who would sneak out of a party without saying goodbye? | Quem sairia de uma festa à francesa?
+a026 | Who is most likely to drunk-buy something online? | Quem compraria coisas online com uns copos a mais?
+a027 | Who would invest everything in a crypto coin named after a dog? | Quem investiria tudo numa criptomoeda com nome de cão?
+a028 | Who would get caught lying the fastest? | Quem seria apanhado na mentira mais depressa?
+a029 | Who would survive a week without their phone? | Quem aguentaria uma semana sem telemóvel?
+a030 | Who would turn up to a wedding in the wrong outfit? | Quem apareceria num casamento com a roupa errada?
+a031 | Who has the most embarrassing first-date story? | Quem tem a história de primeiro encontro mais vergonhosa?
+a032 | Who would marry for money? | Quem casaria por dinheiro?
+a033 | Who would have a midlife crisis with a sports car? | Quem teria uma crise de meia-idade com um descapotável?
+a034 | Who would accidentally like an ex's photo from five years ago? | Quem daria "gosto" sem querer a uma foto do ex de há cinco anos?
+a035 | Who would read their partner's messages? | Quem leria as mensagens da cara-metade?
+a036 | Who is the biggest flirt? | Quem se atira mais a toda a gente?
+a037 | Who would win a drinking game? | Quem ganharia um jogo de beber?
+a038 | Who would lose their keys on a night out? | Quem perderia as chaves numa noitada?
+a039 | Who would fake being sick to skip work? | Quem fingiria estar doente para faltar ao trabalho?
+a040 | Who would say "I love you" first? | Quem diria "amo-te" primeiro?
+a041 | Who has had the longest hangover? | Quem já teve a ressaca mais longa?
+a042 | Who would date someone twenty years older? | Quem namoraria alguém vinte anos mais velho?
+a043 | Who would be the worst roommate? | Quem seria a pior pessoa para partilhar casa?
+a044 | Who would blow their bonus in one weekend? | Quem estoiraria o prémio todo num fim de semana?
+a045 | Who would send a voice note that should've stayed a thought? | Quem mandaria um áudio que devia ter ficado só na cabeça?
+a046 | Who would get the group thrown out of a restaurant? | Quem faria o grupo ser posto na rua de um restaurante?
+a047 | Who would take the most selfies at a funeral? | Quem tiraria selfies num funeral?
+a048 | Who would have a secret crush on a colleague? | Quem tem uma paixoneta secreta por alguém do trabalho?
+a049 | Who would win a wet T-shirt contest? | Quem ganharia um concurso de t-shirt molhada?
+a050 | Who would elope to Las Vegas? | Quem fugiria para casar em Las Vegas?
+a051 | Who would cheat at a pub quiz? | Quem faria batota num quiz de bar?
+a052 | Who would dance on the table? | Quem dançaria em cima da mesa?
+a053 | Who has the dirtiest jokes? | Quem conta as piadas mais porcas?
+a054 | Who would end up kissing a stranger at New Year? | Quem acabaria a beijar um desconhecido na passagem de ano?
+a055 | Who would be the first to leave a boring date? | Quem seria o primeiro a fugir de um encontro aborrecido?
+a056 | Who would go back to an ex? | Quem voltaria para o ex?
+a057 | Who would start an OnlyFans to pay the bills? | Quem abriria um OnlyFans para pagar as contas?
+a058 | Who would cry after one glass of wine? | Quem choraria depois de um copo de vinho?
+a059 | Who would stalk a date's profile back to 2012? | Quem investigaria o perfil de um encontro até 2012?
+a060 | Who would get married first? | Quem casaria primeiro?
+# Spicy
+a061 | Who has the highest body count? | Quem tem o "currículo" mais longo na cama?
+a062 | Who would have sex on the first date? | Quem iria para a cama no primeiro encontro?
+a063 | Who is the loudest in bed? | Quem faz mais barulho na cama?
+a064 | Who would have a one-night stand on holiday? | Quem teria um caso de uma noite nas férias?
+a065 | Who has sent the most nudes? | Quem já mandou mais nudes?
+a066 | Who would join the mile-high club? | Quem faria amor num avião?
+a067 | Who would get caught having sex in public? | Quem seria apanhado a ter sexo num sítio público?
+a068 | Who would be the best kisser? | Quem beija melhor?
+a069 | Who fakes it the most? | Quem finge mais na cama?
+a070 | Who would try anything once in bed? | Quem experimentaria tudo pelo menos uma vez na cama?
+a071 | Who would have a threesome? | Quem faria um ménage à trois?
+a072 | Who has the kinkiest secret? | Quem tem o segredo mais atrevido?
+a073 | Who would sleep with their boss? | Quem dormiria com o chefe?
+a074 | Who would be the worst at dirty talk? | Quem seria pior a dizer coisas porcas na cama?
+a075 | Who swears the most during sex? | Quem diz mais palavrões durante o sexo?
+a076 | Who would have a friends-with-benefits arrangement? | Quem teria uma amizade colorida?
+a077 | Who would hook up with someone at a wedding? | Quem se enrolaria com alguém num casamento?
+a078 | Who has the most toys in the bedside drawer? | Quem tem mais brinquedos na mesa de cabeceira?
+a079 | Who would be the most romantic in bed? | Quem é mais romântico na cama?
+a080 | Who would have an affair? | Quem teria um caso às escondidas?
+a081 | Who would get naked at a nudist beach without a second thought? | Quem se despiria numa praia de nudismo sem pensar duas vezes?
+a082 | Who would give the best lap dance? | Quem faria a melhor dança no colo?
+a083 | Who would do a sexy photo shoot? | Quem faria uma sessão de fotos sensual?
+a084 | Who would fall asleep during sex? | Quem adormeceria a meio do sexo?
+a085 | Who would sleep with an ex "just one last time"? | Quem dormiria com o ex "só mais uma vez"?
+a086 | Who would hook up with a celebrity and tell everyone? | Quem se enrolaria com uma celebridade e contaria a toda a gente?
+a087 | Who has the most fucked-up dating history? | Quem tem o historial amoroso mais fodido?
+a088 | Who would say "oh shit" at the worst possible moment? | Quem diria "merda" no pior momento possível?
+a089 | Who would be caught by their parents? | Quem seria apanhado pelos pais?
+a090 | Who would have sex in their parents' house? | Quem faria sexo em casa dos pais?
+a091 | Who would wear sexy lingerie to a dinner party, just because? | Quem iria a um jantar com lingerie sensual por baixo, só porque sim?
+a092 | Who would date two people at the same time? | Quem namoraria duas pessoas ao mesmo tempo?
+a093 | Who would be the most jealous partner? | Quem teria mais ciúmes?
+a094 | Who would make the best porn name? | Quem teria o melhor nome artístico de filme para adultos?
+a095 | Who would skinny-dip at a party? | Quem iria nadar nu numa festa?
+a096 | Who gets turned on by an accent? | Quem se derrete com um sotaque?
+a097 | Who would sext the wrong person? | Quem mandaria uma mensagem atrevida à pessoa errada?
+a098 | Who would last the longest without sex? | Quem aguentaria mais tempo sem sexo?
+a099 | Who would hook up in a club toilet? | Quem se enrolaria com alguém na casa de banho de uma discoteca?
+a100 | Who would give zero fucks about what the neighbours hear? | Quem se estaria a cagar para o que os vizinhos ouvem?
+a101 | Who would make the first move? | Quem daria o primeiro passo?
+a102 | Who would have the most awkward walk of shame? | Quem teria a volta para casa mais envergonhada na manhã seguinte?
+a103 | Who would flirt with the waiter in front of their date? | Quem se meteria com o empregado à frente do par?
+a104 | Who would leave a date for a better offer? | Quem trocaria um encontro por uma proposta melhor?
+a105 | Who would be the best at seduction? | Quem seria melhor na arte da sedução?
+a106 | Who has a secret fetish? | Quem tem um fetiche secreto?
+a107 | Who would be into role-play? | Quem gostaria de fazer "role-play"?
+a108 | Who would say yes to a naughty weekend away right now? | Quem diria já que sim a um fim de semana escaldante?
+a109 | Who would get handcuffs stuck? | Quem ficaria preso nas algemas?
+a110 | Who would have the steamiest holiday romance? | Quem teria o romance de verão mais escaldante?
+
+[spotlight]
+# Cheeky
+as01 | What would {name} do on a perfect first date? | O que faria {name} num primeiro encontro perfeito? | Fancy dinner / Drinks until late / A walk and a coffee / Netflix at home | Jantar chique / Copos até tarde / Passeio e um café / Netflix em casa
+as02 | {name}'s drink of choice on a night out? | A bebida de eleição de {name} numa noitada? | Beer / Wine / Gin and tonic / Shots | Cerveja / Vinho / Gin tónico / Shots
+as03 | What does {name} do when drunk? | O que faz {name} com uns copos? | Dances / Cries / Texts an ex / Falls asleep | Dança / Chora / Manda mensagem ao ex / Adormece
+as04 | How long does {name} take to reply to a crush? | Quanto tempo demora {name} a responder a uma paixoneta? | Seconds / An hour, to look cool / A day / Never | Segundos / Uma hora, para disfarçar / Um dia / Nunca
+as05 | What would {name} spend a surprise €5,000 on? | Em que gastaria {name} 5000 € inesperados? | A holiday / Clothes / Paying debts / One epic party | Umas férias / Roupa / Pagar dívidas / Uma festa épica
+as06 | {name}'s biggest red flag in a partner? | O maior sinal de alarme num par para {name}? | Rude to waiters / Bad hygiene / Still close to an ex / No sense of humour | Mal-educado com empregados / Pouca higiene / Muito próximo do ex / Sem sentido de humor
+as07 | Where would {name} most like to be kissed for the first time? | Onde gostaria {name} de dar o primeiro beijo? | On a beach at sunset / In the rain / At a party / On a doorstep | Na praia ao pôr do sol / À chuva / Numa festa / À porta de casa
+as08 | How did {name} end their worst relationship? | Como acabou {name} a pior relação? | A text / A big fight / Ghosting / They're still in it | Por mensagem / Uma grande discussão / Desaparecendo / Ainda não acabou
+as09 | {name}'s go-to dance move? | O passo de dança de eleição de {name}? | The robot / Hips, hips, hips / Arms in the air / Standing still with a drink | O robô / Muita anca / Braços no ar / Parado de copo na mão
+as10 | What's {name}'s worst habit? | O pior hábito de {name}? | Always late / Phone at dinner / Never replies / Spends too much | Chega sempre atrasado / Telemóvel à mesa / Nunca responde / Gasta demais
+as11 | {name}'s dating app bio would say… | A biografia de {name} numa app de encontros diria… | "Just here for the food" / "Adventurer" / "No drama" / Nothing at all | "Só venho pela comida" / "Aventureiro" / "Sem dramas" / Nada
+as12 | What would {name} do after winning the lottery? | O que faria {name} depois de ganhar o Euromilhões? | Quit work at once / Tell nobody / Buy a house for the family / Throw a huge party | Despedir-se logo / Não contar a ninguém / Comprar casa à família / Uma festa enorme
+as13 | What does {name} lie about most? | Sobre o que mente {name} mais vezes? | Age / Money / Being "five minutes away" / Having read the book | A idade / O dinheiro / Estar "a cinco minutos" / Ter lido o livro
+as14 | {name}'s hangover cure? | A cura de ressaca de {name}? | A greasy breakfast / Sleep all day / Another drink / Water and regret | Pequeno-almoço gorduroso / Dormir o dia todo / Mais um copo / Água e arrependimento
+as15 | How would {name} react to a surprise proposal in public? | Como reagiria {name} a um pedido de casamento em público? | Yes, crying / Run away / Say "let's talk later" / Pretend it's a joke | Sim, a chorar / Fugir / "Falamos depois" / Fingir que é piada
+# Spicy
+as16 | Where's the wildest place {name} would have sex? | O sítio mais louco onde {name} faria sexo? | A beach / A car / A plane / Strictly the bed | Uma praia / Um carro / Um avião / Só na cama
+as17 | What turns {name} on the most? | O que excita mais {name}? | A good laugh / Confidence / A nice smile / Being taken out for dinner | Rir muito / Confiança / Um belo sorriso / Ser levado a jantar
+as18 | {name}'s ideal number of times a week? | O número ideal de vezes por semana para {name}? | Once is fine / Three or four / Every day / Who's counting? | Uma chega / Três ou quatro / Todos os dias / Quem é que conta?
+as19 | What does {name} wear to bed? | O que veste {name} para dormir? | Pyjamas / An old T-shirt / Underwear / Nothing | Pijama / Uma t-shirt velha / Roupa interior / Nada
+as20 | {name}'s favourite time for sex? | A hora preferida de {name} para o sexo? | Morning / Afternoon nap time / Late at night / Whenever | De manhã / À hora da sesta / À noite, tarde / A qualquer hora
+as21 | What would {name} try first? | O que experimentaria {name} primeiro? | Handcuffs / Role-play / A blindfold / Nothing, thanks | Algemas / Role-play / Uma venda nos olhos / Nada, obrigado
+as22 | How does {name} flirt? | Como é que {name} se atira a alguém? | Jokes / Long eye contact / Touching the arm / Doesn't, waits to be flirted with | Com piadas / Olhares demorados / Toques no braço / Não se atira, espera
+as23 | {name}'s biggest turn-off? | O que mais "corta o clima" para {name}? | Bad breath / Socks on / Talking about an ex / Phone in bed | Mau hálito / Meias calçadas / Falar do ex / Telemóvel na cama
+as24 | What would {name} say during sex? | O que diria {name} durante o sexo? | Nothing at all / "Oh my God" / Something filthy / "Did you lock the door?" | Nada / "Ai meu Deus" / Uma coisa bem porca / "Trancaste a porta?"
+as25 | {name}'s most-used swear word? | O palavrão mais usado por {name}? | Shit / Fuck / Bloody hell / Doesn't swear | Merda / Foda-se / Porra / Não diz palavrões
+as26 | How many people has {name} kissed? | Quantas pessoas já beijou {name}? | Under 5 / 5 to 15 / 15 to 50 / Lost count | Menos de 5 / 5 a 15 / 15 a 50 / Perdeu a conta
+as27 | What's {name}'s secret fantasy? | Qual é a fantasia secreta de {name}? | A stranger on a train / A celebrity / Someone in this room / A whole weekend in bed | Um desconhecido no comboio / Uma celebridade / Alguém nesta sala / Um fim de semana inteiro na cama
+as28 | What does {name} do the morning after? | O que faz {name} na manhã seguinte? | Makes breakfast / Sneaks out / Goes again / Calls a friend to tell | Faz o pequeno-almoço / Sai às escondidas / Repete / Liga a contar a alguém
+as29 | Where would {name} hide a sex toy? | Onde esconderia {name} um brinquedo sexual? | Bedside drawer / Inside a sock / In a shoebox / Doesn't hide it | Mesa de cabeceira / Dentro de uma meia / Numa caixa de sapatos / Não esconde
+as30 | {name}'s sexiest feature, according to {name}? | A parte mais sexy de {name}, segundo {name}? | Eyes / Smile / Bum / Brain | Os olhos / O sorriso / O rabo / O cérebro
+as31 | How would {name} react to walking in on friends having sex? | Como reagiria {name} ao apanhar amigos a ter sexo? | Scream and run / Say "sorry!" and stay / Join the gossip later / Take notes | Gritar e fugir / "Desculpem!" e ficar / Contar tudo depois / Tomar notas
+as32 | What's {name}'s ideal dirty weekend? | O fim de semana escaldante ideal de {name}? | A hotel with room service / A cabin in the woods / A beach in Ibiza / Home, phones off | Hotel com serviço de quarto / Cabana no bosque / Praia em Ibiza / Em casa, telemóveis desligados
+
+[draw]
+ad01 | {name} on a disastrous first date | {name} num primeiro encontro desastroso
+ad02 | {name} after the seventh drink | {name} depois do sétimo copo
+ad03 | {name}'s dating app profile picture | A fotografia de {name} na app de encontros
+ad04 | {name} doing the walk of shame | {name} a voltar para casa de manhã com a roupa da véspera
+ad05 | {name} on the morning after a party | {name} na manhã depois da festa
+ad06 | {name} as a stripper | {name} em versão stripper
+ad07 | {name} winning the lottery | {name} a ganhar o Euromilhões
+ad08 | {name} in a very small swimsuit | {name} num fato de banho minúsculo
+ad09 | {name} as a sexy firefighter | {name} em versão bombeiro sexy
+ad10 | {name} at a nudist beach | {name} numa praia de nudismo
+ad11 | {name} dancing on the table | {name} a dançar em cima da mesa
+ad12 | {name} on a reality dating show | {name} num reality show de encontros
+ad13 | {name}'s ex, as {name} remembers them | O ex de {name}, tal como {name} se lembra
+ad14 | {name} trying to look sexy | {name} a tentar parecer sexy
+ad15 | {name} with a terrible hangover | {name} com uma ressaca terrível
+ad16 | {name} on a romance novel cover | {name} na capa de um romance escaldante
+ad17 | {name} in handcuffs | {name} de algemas
+ad18 | {name} getting caught in the act | {name} apanhado em flagrante
+ad19 | {name} at their own bachelor or hen party | {name} na despedida de solteiro
+ad20 | {name} after spending the whole salary | {name} depois de gastar o ordenado todo
+ad21 | {name} in their sexiest underwear | {name} na roupa interior mais sexy
+ad22 | {name} sending a risky text | {name} a mandar uma mensagem arriscada
+ad23 | {name} doing karaoke at 3 a.m. | {name} no karaoke às três da manhã
+ad24 | {name} as a Greek god | {name} como uma divindade grega
+ad25 | {name} hiding from an ex at the supermarket | {name} a esconder-se do ex no supermercado
+ad26 | {name} in a hot tub with a glass of champagne | {name} num jacúzi com uma taça de champanhe
+ad27 | {name} posing for a calendar | {name} a posar para um calendário
+ad28 | {name} the moment the condom breaks | {name} no momento em que o preservativo rebenta
+ad29 | {name} as a fortune teller reading your love life | {name} a ler a sina amorosa de alguém
+ad30 | {name} after the best night of their life | {name} depois da melhor noite da vida
+ad31 | {name} getting a tattoo of an ex's name | {name} a tatuar o nome do ex
+ad32 | {name} on a nude modelling job for an art class | {name} a posar nu para uma aula de pintura
+ad33 | {name} at a wedding, very drunk | {name} num casamento, com uns copos a mais
+ad34 | {name} in a love triangle | {name} num triângulo amoroso
+ad35 | {name} trying to flirt | {name} a tentar engatar alguém

@@ -8,7 +8,7 @@ const STRINGS = {
     yourName: 'Your name', join: 'Join', takeSelfie: 'Take a selfie', newSelfie: 'New selfie',
     sending: 'Sending…', change: 'Change', save: 'Save', leave: 'Leave the game',
     leaveConfirm: 'Leave the game?',
-    started: 'The game has started! Look at the TV.',
+    modeFamily: 'Family questions', modeAdults: 'Adult questions',
     reconnecting: 'Connecting to the TV…',
     waitingFew: 'Waiting for more players. {n} more needed.',
     waitingOne: 'Waiting for more players. 1 more needed.',
@@ -25,7 +25,7 @@ const STRINGS = {
     yourName: 'O teu nome', join: 'Entrar', takeSelfie: 'Tirar uma selfie', newSelfie: 'Nova selfie',
     sending: 'A enviar…', change: 'Mudar', save: 'Guardar', leave: 'Sair do jogo',
     leaveConfirm: 'Sair do jogo?',
-    started: 'O jogo começou! Olha para a TV.',
+    modeFamily: 'Perguntas para a família', modeAdults: 'Perguntas para adultos',
     reconnecting: 'A ligar à TV…',
     waitingFew: 'À espera de mais jogadores. Faltam {n}.',
     waitingOne: 'À espera de mais jogadores. Falta 1.',
@@ -36,40 +36,6 @@ const STRINGS = {
     errNetwork: 'Não consigo chegar à TV. Estás na mesma rede Wi-Fi?',
     errSelfie: 'Essa foto não deu. Tenta outra vez.',
     errRestarted: 'A TV começou um jogo novo. Lê outra vez o código QR, ou escreve o código que ela mostra.',
-  },
-  es: {
-    roomCode: 'Código de la tele',
-    yourName: 'Tu nombre', join: 'Entrar', takeSelfie: 'Hacerse un selfi', newSelfie: 'Nuevo selfi',
-    sending: 'Enviando…', change: 'Cambiar', save: 'Guardar', leave: 'Salir del juego',
-    leaveConfirm: '¿Salir del juego?',
-    started: '¡Empieza el juego! Mira la tele.',
-    reconnecting: 'Conectando con la tele…',
-    waitingFew: 'Esperando a más jugadores. Faltan {n}.',
-    waitingOne: 'Esperando a más jugadores. Falta 1.',
-    ready: '¿Estáis todos? Empezad el juego en la tele con OK.',
-    errName: 'Escribe un nombre de hasta 14 letras.', errTaken: 'Ya hay alguien con ese nombre.',
-    errFull: 'El juego está lleno.', errStarted: 'El juego ya ha empezado. ¡Entra en el siguiente!',
-    errCode: 'Ese código QR es de un juego antiguo. Escanea el de la tele.',
-    errNetwork: 'No llego a la tele. ¿Estás en la misma wifi?',
-    errSelfie: 'Esa foto no ha funcionado. Inténtalo otra vez.',
-    errRestarted: 'La tele ha empezado un juego nuevo. Escanea otra vez el código QR, o escribe el código que muestra.',
-  },
-  fr: {
-    roomCode: 'Code sur la télé',
-    yourName: 'Ton prénom', join: 'Entrer', takeSelfie: 'Prendre un selfie', newSelfie: 'Nouveau selfie',
-    sending: 'Envoi…', change: 'Changer', save: 'Enregistrer', leave: 'Quitter la partie',
-    leaveConfirm: 'Quitter la partie ?',
-    started: 'La partie commence ! Regarde la télé.',
-    reconnecting: 'Connexion à la télé…',
-    waitingFew: 'En attente d’autres joueurs. Il en faut encore {n}.',
-    waitingOne: 'En attente d’autres joueurs. Il en faut encore 1.',
-    ready: 'Tout le monde est là ? Lancez la partie sur la télé avec OK.',
-    errName: 'Écris un prénom de 14 lettres au plus.', errTaken: 'Quelqu’un a déjà ce prénom.',
-    errFull: 'La partie est complète.', errStarted: 'La partie a déjà commencé. Rejoins la suivante !',
-    errCode: 'Ce code QR vient d’une ancienne partie. Scanne celui de la télé.',
-    errNetwork: 'Impossible de joindre la télé. Es-tu sur le même Wi-Fi ?',
-    errSelfie: 'Cette photo n’a pas marché. Réessaie.',
-    errRestarted: 'La télé a lancé une nouvelle partie. Scanne à nouveau le code QR, ou tape le code affiché.',
   },
 };
 const lang = (navigator.language || 'en').slice(0, 2).toLowerCase();
@@ -92,7 +58,7 @@ let uploading = false;
 document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = T[el.dataset.t]; });
 
 function show(id) {
-  for (const s of ['join', 'room', 'started']) $(s).hidden = s !== id;
+  for (const s of ['join', 'room', 'game']) $(s).hidden = s !== id;
 }
 
 function saveToken(value) {
@@ -185,10 +151,14 @@ async function checkToken() {
   setTimeout(() => { if (token) connect(); }, 3000);
 }
 
+function selfieUrl(player) {
+  return '/selfie/' + player.id + '?c=' + code + '&v=' + player.selfie;
+}
+
 function avatar(el, player, big) {
   el.style.backgroundColor = COLOURS[player.colour % COLOURS.length];
   if (player.selfie) {
-    el.style.backgroundImage = 'url("/selfie/' + player.id + '?c=' + code + '&v=' + player.selfie + '")';
+    el.style.backgroundImage = 'url("' + selfieUrl(player) + '")';
     el.textContent = '';
   } else {
     el.style.backgroundImage = '';
@@ -198,8 +168,10 @@ function avatar(el, player, big) {
 }
 
 function draw() {
-  if (room.phase === 'STARTED') { show('started'); return; }
+  if (room.phase === 'GAME') { show('game'); renderGame(room); return; }
+  leaveGame();
   show('room');
+  $('mode').textContent = room.mode === 'ADULTS' ? T.modeAdults : T.modeFamily;
   const me = room.players.find((p) => p.id === room.you);
   if (!me) return;
   avatar($('me-avatar'), me, true);

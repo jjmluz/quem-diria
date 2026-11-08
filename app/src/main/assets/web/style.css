@@ -174,3 +174,73 @@ form button[type=submit]:disabled { opacity: 0.5; }
 
 #code-field { margin-bottom: 16px; }
 #code { text-transform: uppercase; letter-spacing: 4px; }
+
+/* The lobby's question mode. */
+.mode { margin: -4px 0 16px; text-align: center; color: var(--yellow); font-weight: 700; }
+
+/* The game. */
+.game-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.game-name { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.game-score { margin-left: auto; color: var(--muted); white-space: nowrap; font-size: 15px; }
+
+.timer { height: 6px; background: var(--card); border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
+.timer-bar { height: 100%; background: var(--accent); border-radius: 3px; }
+.timer-bar.hurry { background: var(--yellow); }
+
+.kicker { margin: 0 0 6px; color: var(--yellow); font-weight: 700; font-size: 15px; }
+.question { margin: 0 0 8px; font-size: 24px; line-height: 1.25; }
+.question.small { font-size: 19px; }
+.hint { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
+.gained { text-align: center; font-size: 34px; font-weight: 900; color: var(--accent); margin: 8px 0; }
+.gained.none { font-size: 20px; color: var(--muted); font-weight: 600; }
+
+.choices { display: grid; gap: 10px; }
+.players-choice { grid-template-columns: 1fr 1fr; }
+.choice {
+  display: flex; align-items: center; gap: 10px; min-width: 0;
+  padding: 10px 12px; text-align: left;
+  background: var(--card); border: 2px solid transparent; border-radius: 14px;
+}
+.choice span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.choice.option span:last-child { white-space: normal; }
+.choice b {
+  flex: none; width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--background); color: var(--yellow);
+}
+.choice.chosen { border-color: var(--accent); background: #3a2350; }
+
+.pad {
+  display: block; width: 100%; aspect-ratio: 1; margin: 8px 0;
+  border-radius: 16px; touch-action: none; background: var(--card);
+}
+.tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.swatch { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ffffff44; padding: 0; }
+.swatch.chosen { outline: 3px solid var(--accent); outline-offset: 2px; }
+.size {
+  width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--card);
+  display: flex; align-items: center; justify-content: center; padding: 0;
+}
+.size span { display: block; border-radius: 50%; background: var(--text); }
+.size.chosen { outline: 3px solid var(--accent); }
+.undo { margin-left: auto; padding: 6px 12px; border: 0; border-radius: 10px; background: var(--card); font-weight: 600; }
+.primary {
+  display: block; width: 100%; padding: 14px; font-size: 20px; font-weight: 700;
+  color: #170F2B; background: var(--accent); border: 0; border-radius: 14px;
+}
+.primary:disabled { opacity: 0.5; }
+
+.gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.drawing { position: relative; padding: 0; border: 3px solid transparent; border-radius: 14px; background: var(--card); overflow: hidden; }
+.drawing img { display: block; width: 100%; aspect-ratio: 1; }
+.drawing.chosen { border-color: var(--accent); }
+.drawing.own { opacity: 0.5; }
+.tag {
+  position: absolute; left: 6px; top: 6px; padding: 2px 8px; border-radius: 999px;
+  font-weight: 800; font-size: 14px; color: #170F2B; background: var(--yellow);
+}
+
+.award { margin: 20px 0; padding: 16px; background: var(--card); border-radius: 16px; text-align: center; }
+.award-q { margin: 0 0 6px; font-size: 20px; font-weight: 800; }
+
+.draw-label { margin: 0; color: var(--yellow, #FFC83D); font-weight: 700; }

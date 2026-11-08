@@ -9,6 +9,36 @@
         <item quantity="other">Faltam %d jogadores</item>
     </plurals>
     <string name="start">Começar o jogo</string>
-    <string name="coming_soon">Já estão todos! As rondas chegam em breve.</string>
     <string name="back_to_lobby">Voltar à sala</string>
+    <string name="mode_family">Perguntas: família</string>
+    <string name="mode_adults">Perguntas: adultos</string>
+    <string name="narrator_on">Narrador ligado</string>
+    <string name="narrator_off">Narrador desligado</string>
+    <string name="narrator_hello">Olá! Eu leio as perguntas.</string>
+    <string name="question_of">Pergunta %1$d de %2$d</string>
+    <string name="final_round">Ronda final · pontos a dobrar</string>
+    <string name="vote_on_phones">Votem nos telemóveis</string>
+    <string name="next">Seguinte</string>
+    <string name="dont_wait">Não esperar</string>
+    <string name="in_spotlight">No centro</string>
+    <string name="spotlight_rules">%s responde a sério. Os outros adivinham o que escolheu!</string>
+    <string name="spotlight_answer">Resposta de %s</string>
+    <string name="no_answer">%s não respondeu</string>
+    <string name="draw_label">Desenhem</string>
+    <string name="draw_on_phones">Todos menos %s, desenhem nos telemóveis!</string>
+    <string name="pick_best">Votem no melhor desenho</string>
+    <string name="drawing_by">de %s</string>
+    <plurals name="votes">
+        <item quantity="one">%d voto</item>
+        <item quantity="other">%d votos</item>
+    </plurals>
+    <string name="scores">Pontuação</string>
+    <string name="final_title">Ronda final</string>
+    <string name="final_subtitle">Os pontos contam a dobrar!</string>
+    <string name="winner">%s ganha!</string>
+    <string name="winners_draw">Empate! %s</string>
+    <string name="award_none">Um mistério: ninguém votou nesta pessoa</string>
+    <string name="leave_game">Sair deste jogo?</string>
+    <string name="leave">Sair</string>
+    <string name="keep_playing">Continuar</string>
 </resources>

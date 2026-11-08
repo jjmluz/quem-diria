@@ -88,18 +88,52 @@ class LobbyTest {
         assertFalse(lobby.playerFor(ana.token)!!.connected)
     }
 
+    private val deck = Deck(
+        listOf(Item("v1", "Who?")),
+        listOf(SpotlightItem("s1", "{name}?", listOf("a", "b", "c", "d"))),
+        listOf(Item("d1", "Draw {name}")),
+    )
+
     @Test
     fun theGameStartsWithEnoughPlayersAndThenNobodyJoins() {
         val lobby = Lobby()
         lobby.joined("Ana")
         lobby.joined("Rui")
-        assertFalse(lobby.start())
+        assertFalse(lobby.start(deck, now = 0))
         lobby.joined("Eva")
-        assertTrue(lobby.start())
-        assertEquals(Phase.STARTED, lobby.room.value.phase)
+        lobby.setMode(Mode.ADULTS)
+        assertTrue(lobby.start(deck, now = 0))
+        assertEquals(Phase.GAME, lobby.room.value.phase)
+        assertEquals(Mode.ADULTS, lobby.room.value.mode)
+        assertEquals(Stage.VOTE, lobby.room.value.game?.stage)
         assertEquals(JoinResult.Started, lobby.join("Zé"))
+        // The mode can't change mid-game.
+        lobby.setMode(Mode.FAMILY)
+        assertEquals(Mode.ADULTS, lobby.room.value.mode)
         lobby.backToLobby()
         assertEquals(Phase.LOBBY, lobby.room.value.phase)
+        assertNull(lobby.room.value.game)
         assertEquals(3, lobby.room.value.players.size)
+    }
+
+    @Test
+    fun playersActThroughTheirTokens() {
+        val lobby = Lobby()
+        val ana = lobby.joined("Ana")
+        val rui = lobby.joined("Rui")
+        val eva = lobby.joined("Eva")
+        lobby.start(deck, now = 0)
+        assertTrue(lobby.vote(ana.token, rui.id))
+        assertFalse(lobby.vote("nope", rui.id))
+        assertFalse(lobby.answer(ana.token, 1))
+        listOf(ana, rui, eva).forEach { lobby.streamChanged(it.token, open = true) }
+        lobby.vote(rui.token, rui.id)
+        lobby.tick(1)
+        assertEquals(Stage.VOTE, lobby.room.value.game?.stage)
+        lobby.vote(eva.token, ana.id)
+        lobby.tick(1)
+        assertEquals(Stage.VOTE_REVEAL, lobby.room.value.game?.stage)
+        lobby.skip(2)
+        assertEquals(Stage.VOTE, lobby.room.value.game?.stage)
     }
 }

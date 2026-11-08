@@ -1,0 +1,209 @@
+# Quem Diria? — family questions, for all ages.
+# Format: see Deck.parse in core/.../Deck.kt. {name} is the player in the spotlight.
+# Portuguese is from Portugal; it avoids gendered words where it can, since players can be anyone.
+
+[vote]
+f001 | Who would survive longest on a desert island? | Quem sobreviveria mais tempo numa ilha deserta?
+f002 | Who is most likely to become famous? | Quem tem mais hipóteses de ficar famoso?
+f003 | Who would eat the last biscuit and say nothing? | Quem comeria a última bolacha sem dizer nada?
+f004 | Who takes the longest to get ready? | Quem demora mais tempo a arranjar-se?
+f005 | Who would be the best teacher? | Quem daria o melhor professor?
+f006 | Who laughs at their own jokes the most? | Quem se ri mais das próprias piadas?
+f007 | Who would win a dance battle? | Quem ganharia uma batalha de dança?
+f008 | Who is most likely to get lost with a map in their hand? | Quem se perderia com um mapa na mão?
+f009 | Who would you call in a zombie apocalypse? | A quem ligavas num apocalipse zombie?
+f010 | Who sings the loudest in the shower? | Quem canta mais alto no duche?
+f011 | Who would make the best president? | Quem daria o melhor Presidente da República?
+f012 | Who is most likely to adopt ten cats? | Quem adotaria dez gatos?
+f013 | Who would win at hide-and-seek? | Quem ganharia às escondidas?
+f014 | Who falls asleep first on a car trip? | Quem adormece primeiro numa viagem de carro?
+f015 | Who would be the best spy? | Quem daria o melhor espião?
+f016 | Who is the worst at keeping a secret? | Quem é pior a guardar segredos?
+f017 | Who would cry at a cartoon? | Quem choraria a ver um filme de animação?
+f018 | Who is most likely to forget a birthday? | Quem se esqueceria de um aniversário?
+f019 | Who would be first to try a strange new food? | Quem seria o primeiro a provar uma comida estranha?
+f020 | Who has the best laugh? | Quem tem o riso mais contagiante?
+f021 | Who would win a cooking contest? | Quem ganharia um concurso de culinária?
+f022 | Who would burn the toast? | Quem queimaria as torradas?
+f023 | Who is most likely to talk to animals? | Quem fala com os animais?
+f024 | Who would be the best superhero? | Quem daria o melhor super-herói?
+f025 | Who would run away from a spider? | Quem fugiria de uma aranha?
+f026 | Who is the biggest chatterbox? | Quem fala pelos cotovelos?
+f027 | Who would build the best sandcastle? | Quem faria o melhor castelo de areia?
+f028 | Who is most likely to become an astronaut? | Quem tem mais hipóteses de ir ao espaço?
+f029 | Who would get the giggles at a serious moment? | Quem teria um ataque de riso num momento sério?
+f030 | Who gives the best hugs? | Quem dá os melhores abraços?
+f031 | Who would win a staring contest? | Quem ganharia um concurso de olhares?
+f032 | Who is always hungry? | Quem tem sempre fome?
+f033 | Who would be the best at a talent show? | Quem brilharia num concurso de talentos?
+f034 | Who is most likely to be late? | Quem chega sempre atrasado?
+f035 | Who would make the best detective? | Quem daria o melhor detetive?
+f036 | Who has the messiest room? | Quem tem o quarto mais desarrumado?
+f037 | Who would tell the best bedtime story? | Quem contaria a melhor história para adormecer?
+f038 | Who is most likely to win the lottery and lose the ticket? | Quem ganharia o Euromilhões e perderia o boletim?
+f039 | Who would be the best pirate? | Quem daria o melhor pirata?
+f040 | Who would make friends with a ghost? | Quem faria amizade com um fantasma?
+f041 | Who is the best at video games? | Quem é melhor a jogar videojogos?
+f042 | Who would forget where they parked? | Quem se esqueceria de onde estacionou?
+f043 | Who is most likely to break a world record? | Quem bateria um recorde do mundo?
+f044 | Who would be the best at camping? | Quem se safaria melhor a acampar?
+f045 | Who has the best dance moves? | Quem tem os melhores passos de dança?
+f046 | Who would get scared in a haunted house? | Quem se assustaria numa casa assombrada?
+f047 | Who is the most patient? | Quem tem mais paciência?
+f048 | Who would win an arm wrestle? | Quem ganharia um braço de ferro?
+f049 | Who is most likely to sleep until lunchtime? | Quem dormiria até à hora de almoço?
+f050 | Who would be the best tour guide? | Quem daria o melhor guia turístico?
+f051 | Who tells the worst jokes? | Quem conta as piores piadas?
+f052 | Who would be the best at babysitting? | Quem tomaria melhor conta de crianças?
+f053 | Who is most likely to invent something amazing? | Quem inventaria uma coisa incrível?
+f054 | Who would sneak a snack into the cinema? | Quem levaria comida às escondidas para o cinema?
+f055 | Who is the best at giving advice? | Quem dá os melhores conselhos?
+f056 | Who would be the worst at a quiet game? | Quem seria pior a ficar calado num jogo de silêncio?
+f057 | Who is most likely to have a secret talent? | Quem tem um talento secreto?
+f058 | Who would win a game of charades? | Quem ganharia um jogo de mímica?
+f059 | Who would trip over nothing? | Quem tropeçaria no nada?
+f060 | Who is most likely to live in a castle one day? | Quem viveria num castelo um dia?
+f061 | Who would be the best at a quiz? | Quem ganharia um concurso de perguntas?
+f062 | Who has the best handwriting? | Quem tem a letra mais bonita?
+f063 | Who would make the best robot? | Quem daria o melhor robô?
+f064 | Who is the most stubborn? | Quem tem a cabeça mais dura?
+f065 | Who would win a pie-eating contest? | Quem ganharia um concurso de comer bolos?
+f066 | Who would spend all their money on sweets? | Quem gastaria o dinheiro todo em doces?
+f067 | Who is most likely to become a YouTuber? | Quem se tornaria YouTuber?
+f068 | Who would be the best at fixing things? | Quem é melhor a arranjar coisas?
+f069 | Who would get a song stuck in everyone's head? | Quem poria toda a gente a cantar a mesma música?
+f070 | Who is most likely to wear socks with sandals? | Quem usaria meias com sandálias?
+f071 | Who would be the best king or queen? | Quem governaria melhor um reino?
+f072 | Who would keep the TV remote all to themselves? | Quem ficaria com o comando da televisão só para si?
+f073 | Who is most likely to cheat at board games? | Quem faz batota nos jogos de tabuleiro?
+f074 | Who would make the best grandparent? | Quem daria os melhores avós?
+f075 | Who is the bravest? | Quem tem mais coragem?
+f076 | Who would win a race to the car? | Quem chegaria primeiro ao carro?
+f077 | Who would ask the most questions on a tour? | Quem faria mais perguntas numa visita guiada?
+f078 | Who is most likely to name a pet after food? | Quem daria a um animal nome de comida?
+f079 | Who would be the best at magic tricks? | Quem faria os melhores truques de magia?
+f080 | Who has the most energy in the morning? | Quem tem mais energia de manhã?
+f081 | Who would be the grumpiest without breakfast? | Quem fica mais rabugento sem pequeno-almoço?
+f082 | Who is most likely to make a mess in the kitchen? | Quem faria mais confusão na cozinha?
+f083 | Who would be the best at drawing? | Quem desenha melhor?
+f084 | Who would get distracted by a butterfly? | Quem se distrairia com uma borboleta?
+f085 | Who is most likely to win an Oscar? | Quem ganharia um Óscar?
+f086 | Who would survive best in the jungle? | Quem se safaria melhor na selva?
+f087 | Who would build a time machine? | Quem construiria uma máquina do tempo?
+f088 | Who is the most competitive? | Quem detesta mais perder?
+f089 | Who would sing at a wedding without being asked? | Quem cantaria num casamento sem ninguém pedir?
+f090 | Who is most likely to collect strange things? | Quem coleciona coisas estranhas?
+f091 | Who would be the funniest clown? | Quem daria o palhaço mais engraçado?
+f092 | Who would give away their last sweet? | Quem daria o último rebuçado a outra pessoa?
+f093 | Who is most likely to sleepwalk? | Quem é sonâmbulo?
+f094 | Who would be the best at a sport nobody has heard of? | Quem seria campeão de um desporto que ninguém conhece?
+f095 | Who would make the best weather forecaster? | Quem apresentaria melhor o boletim meteorológico?
+f096 | Who would be the first to say "are we there yet?" | Quem seria o primeiro a perguntar "ainda falta muito?"
+f097 | Who is most likely to wear pyjamas all day? | Quem passaria o dia de pijama?
+f098 | Who would win a game of musical chairs? | Quem ganharia o jogo das cadeiras?
+f099 | Who would be the best at taking photos? | Quem tira as melhores fotografias?
+f100 | Who is most likely to talk in their sleep? | Quem fala a dormir?
+f101 | Who would be the best farmer? | Quem daria o melhor agricultor?
+f102 | Who would get the hiccups at the worst moment? | Quem teria soluços no pior momento?
+f103 | Who is most likely to write a book? | Quem escreveria um livro?
+f104 | Who would be the best at a water fight? | Quem ganharia uma guerra de água?
+f105 | Who would know what to do in an emergency? | Quem saberia o que fazer numa emergência?
+f106 | Who is the most likely to dance in the supermarket? | Quem dançaria no supermercado?
+f107 | Who would be the best at running a café? | Quem teria o melhor café da vila?
+f108 | Who would win a snowball fight? | Quem ganharia uma guerra de bolas de neve?
+f109 | Who is the most organised? | Quem tem tudo mais arrumado?
+f110 | Who would invent the silliest word? | Quem inventaria a palavra mais tonta?
+f111 | Who would be the best at looking after a dragon? | Quem tomaria melhor conta de um dragão?
+f112 | Who is most likely to eat dessert first? | Quem comeria a sobremesa primeiro?
+f113 | Who would take the most selfies on holiday? | Quem tiraria mais selfies nas férias?
+f114 | Who would be the best at a sleepover? | Quem animaria mais uma festa do pijama?
+f115 | Who is most likely to say sorry first? | Quem pede desculpa primeiro?
+f116 | Who would be the best mermaid or merman? | Quem daria a melhor sereia?
+f117 | Who would make the best sandwich? | Quem faria a melhor sandes?
+f118 | Who is most likely to cry laughing? | Quem chora a rir?
+f119 | Who would never give up? | Quem nunca desistiria?
+f120 | Who would be the best at keeping plants alive? | Quem é melhor a manter as plantas vivas?
+
+[spotlight]
+fs01 | What would {name} take to a desert island? | O que levaria {name} para uma ilha deserta? | A book / A phone / Lots of snacks / A best friend | Um livro / O telemóvel / Muitos petiscos / O melhor amigo
+fs02 | {name}'s perfect Sunday? | O domingo perfeito de {name}? | Sleeping late / A day at the beach / Games all day / A big family lunch | Dormir até tarde / Um dia de praia / Jogar o dia todo / Um grande almoço de família
+fs03 | Which superpower would {name} pick? | Que superpoder escolheria {name}? | Flying / Being invisible / Reading minds / Stopping time | Voar / Ficar invisível / Ler mentes / Parar o tempo
+fs04 | What does {name} do first in the morning? | O que faz {name} logo de manhã? | Looks at the phone / Has breakfast / Stays in bed / Showers | Vê o telemóvel / Toma o pequeno-almoço / Fica na cama / Toma duche
+fs05 | {name}'s favourite pizza topping? | O ingrediente preferido de {name} na piza? | Cheese only / Pineapple / Pepperoni / Mushrooms | Só queijo / Ananás / Pepperoni / Cogumelos
+fs06 | Which animal is {name} most like? | Com que animal se parece mais {name}? | A cat / A dog / An owl / A monkey | Um gato / Um cão / Um mocho / Um macaco
+fs07 | What scares {name} the most? | O que mete mais medo a {name}? | Spiders / The dark / Heights / Being late | Aranhas / O escuro / Alturas / Chegar atrasado
+fs08 | Where would {name} go on holiday? | Para onde iria {name} de férias? | A beach / The mountains / A big city / A theme park | Uma praia / A serra / Uma grande cidade / Um parque de diversões
+fs09 | {name}'s dream job? | O emprego de sonho de {name}? | Chef / Footballer / Scientist / Artist | Cozinheiro / Futebolista / Cientista / Artista
+fs10 | What would {name} do with a million euros? | O que faria {name} com um milhão de euros? | Travel the world / Buy a house / Give it away / Save it all | Viajar pelo mundo / Comprar uma casa / Dar a quem precisa / Poupar tudo
+fs11 | {name}'s favourite season? | A estação do ano preferida de {name}? | Spring / Summer / Autumn / Winter | Primavera / Verão / Outono / Inverno
+fs12 | What would {name} never eat? | O que é que {name} nunca comeria? | Snails / Sushi / Broccoli / Very spicy food | Caracóis / Sushi / Brócolos / Comida muito picante
+fs13 | How does {name} fall asleep? | Como adormece {name}? | Reading / Watching videos / Instantly / After hours of thinking | A ler / A ver vídeos / Num instante / Depois de horas a pensar
+fs14 | What would {name} be famous for? | Porque é que {name} ficaria famoso? | Singing / Sport / Being funny / Inventing something | A cantar / Pelo desporto / Por ter piada / Por inventar algo
+fs15 | {name}'s ideal pet? | O animal de estimação ideal de {name}? | A dog / A cat / A fish / A dragon | Um cão / Um gato / Um peixe / Um dragão
+fs16 | What's {name}'s favourite part of a party? | A parte preferida de uma festa para {name}? | The food / The music / The games / Going home | A comida / A música / Os jogos / Ir para casa
+fs17 | Which time would {name} visit with a time machine? | Que época visitaria {name} numa máquina do tempo? | The dinosaurs / The knights / The 80s / The future | Os dinossauros / Os cavaleiros / Os anos 80 / O futuro
+fs18 | {name}'s favourite dessert? | A sobremesa preferida de {name}? | Ice cream / Chocolate cake / Rice pudding / Fruit | Gelado / Bolo de chocolate / Arroz-doce / Fruta
+fs19 | How would {name} spend a rainy day? | Como passaria {name} um dia de chuva? | Watching films / Playing games / Baking / Jumping in puddles | A ver filmes / A jogar / A fazer bolos / A saltar nas poças
+fs20 | What does {name} do when bored? | O que faz {name} quando se aborrece? | Eats / Sleeps / Plays on the phone / Annoys someone | Come / Dorme / Joga no telemóvel / Chateia alguém
+fs21 | What would {name} name a pet goldfish? | Que nome daria {name} a um peixinho dourado? | Nemo / Bubbles / Mr Fish / Something very long | Nemo / Bolhas / Sr. Peixe / Um nome muito comprido
+fs22 | {name}'s favourite way to travel? | A forma preferida de viajar de {name}? | Car / Plane / Train / Bike | Carro / Avião / Comboio / Bicicleta
+fs23 | Which sport would {name} win at the Olympics? | Em que desporto ganharia {name} os Jogos Olímpicos? | Swimming / Running / Gymnastics / Napping | Natação / Corrida / Ginástica / Sestas
+fs24 | What would {name} do if invisible for a day? | O que faria {name} invisível durante um dia? | Play pranks / Sneak into a concert / Eat in a fancy restaurant / Nothing, too scared | Pregar partidas / Entrar num concerto / Comer num restaurante chique / Nada, por medo
+fs25 | What's {name}'s secret talent? | Qual é o talento secreto de {name}? | Singing / Cooking / Drawing / Making people laugh | Cantar / Cozinhar / Desenhar / Pôr os outros a rir
+fs26 | What's in {name}'s pockets right now? | O que tem {name} nos bolsos agora? | Keys / Sweets / Nothing / Tissues | Chaves / Rebuçados / Nada / Lenços
+fs27 | {name}'s favourite film kind? | O tipo de filme preferido de {name}? | Cartoons / Action / Comedy / Scary | Animação / Ação / Comédia / Terror
+fs28 | How does {name} act on their birthday? | Como se porta {name} no dia de anos? | Party all day / Pretends it's normal / Wants all the presents / Gets emotional | Festa o dia todo / Finge que é um dia normal / Quer as prendas todas / Fica emocionado
+fs29 | If {name} were a vegetable, which one? | Se {name} fosse um legume, qual seria? | A carrot / A potato / A pumpkin / A chilli | Uma cenoura / Uma batata / Uma abóbora / Uma malagueta
+fs30 | What would {name} do on a free afternoon? | O que faria {name} numa tarde livre? | Go outside / Watch TV / See friends / Take a nap | Sair de casa / Ver televisão / Estar com amigos / Dormir a sesta
+fs31 | {name}'s go-to breakfast? | O pequeno-almoço habitual de {name}? | Cereal / Toast / Fruit / Nothing at all | Cereais / Torradas / Fruta / Nada
+fs32 | Which film world would {name} live in? | Em que mundo de filme viveria {name}? | A magic school / Space / Under the sea / A jungle | Uma escola de magia / O espaço / O fundo do mar / A selva
+fs33 | What makes {name} grumpy? | O que põe {name} de mau humor? | Being hungry / Waking up early / Losing a game / Slow internet | Ter fome / Acordar cedo / Perder um jogo / Internet lenta
+fs34 | How would {name} decorate their dream bedroom? | Como decoraria {name} o quarto de sonho? | Full of games / Like a jungle / Very tidy and white / With a slide | Cheio de jogos / Como uma selva / Muito arrumado e branco / Com um escorrega
+fs35 | What would {name} cook for us? | O que cozinharia {name} para nós? | Pasta / Burgers / Something burnt / A takeaway | Massa / Hambúrgueres / Algo queimado / Comida encomendada
+fs36 | What's {name}'s favourite sound? | Qual é o som preferido de {name}? | Rain / The sea / Music / Silence | Chuva / O mar / Música / Silêncio
+fs37 | Which car would {name} drive? | Que carro conduziria {name}? | A racing car / A camper van / A tiny old car / A tractor | Um carro de corrida / Uma autocaravana / Um carrinho antigo / Um trator
+fs38 | {name} finds a lost wallet. What happens? | {name} encontra uma carteira perdida. O que acontece? | Returns it at once / Posts about it online / Takes it to the police / Forgets it in a pocket | Devolve logo / Publica nas redes sociais / Leva à polícia / Esquece-se dela no bolso
+fs39 | Which job would {name} hate the most? | Que emprego detestaria mais {name}? | Dentist / Bin collector / Accountant / Clown | Dentista / Recolha do lixo / Contabilista / Palhaço
+fs40 | What's {name}'s favourite game here? | O jogo preferido de {name} aqui? | Cards / Board games / Video games / Football | Cartas / Jogos de tabuleiro / Videojogos / Futebol
+
+[draw]
+fd01 | {name} with superpowers | {name} com superpoderes
+fd02 | {name} as a pirate | {name} em versão pirata
+fd03 | {name} in 50 years | {name} daqui a 50 anos
+fd04 | {name} on the Moon | {name} na Lua
+fd05 | {name} with a huge moustache | {name} com um bigode enorme
+fd06 | {name} riding a dinosaur | {name} a montar um dinossauro
+fd07 | {name}'s new hairstyle | O novo penteado de {name}
+fd08 | {name} as a cat | {name} em versão gato
+fd09 | {name} on a big adventure | {name} numa grande aventura
+fd10 | {name} after eating too many sweets | {name} depois de comer doces a mais
+fd11 | {name} wearing a crown | {name} de coroa na cabeça
+fd12 | {name} under the sea | {name} no fundo do mar
+fd13 | {name} as a robot | {name} em versão robô
+fd14 | {name} on a Monday morning | {name} numa segunda-feira de manhã
+fd15 | {name} with a funny hat | {name} com um chapéu engraçado
+fd16 | {name} as a rock star | {name} em versão estrela de rock
+fd17 | {name} meeting an alien | {name} a conhecer um extraterrestre
+fd18 | {name} with glasses and a beard | {name} com óculos e barba
+fd19 | {name} at the beach | {name} na praia
+fd20 | {name} as a wizard | {name} com poderes de magia
+fd21 | {name} in a snowstorm | {name} numa tempestade de neve
+fd22 | {name} with clown makeup | {name} com maquilhagem de palhaço
+fd23 | {name} as a fruit | {name} em versão fruta
+fd24 | {name} winning a gold medal | {name} a ganhar uma medalha de ouro
+fd25 | {name} with a pet dragon | {name} com um dragão de estimação
+fd26 | {name} at a fancy dress party | {name} numa festa de máscaras
+fd27 | {name} as a vampire | {name} em versão vampiro
+fd28 | {name} with a big smile | {name} com um sorriso enorme
+fd29 | {name} lost in the jungle | {name} sem rumo na selva
+fd30 | {name} as a famous painting | {name} num quadro famoso
+fd31 | {name} on the cover of a magazine | {name} na capa de uma revista
+fd32 | {name} with rainbow hair | {name} com cabelo cor de arco-íris
+fd33 | {name} as a monster | {name} em versão monstro
+fd34 | {name} on holiday | {name} de férias
+fd35 | {name} in a spacesuit | {name} com fato de astronauta
+fd36 | {name} as a baby | {name} em bebé
+fd37 | {name} with tattoos everywhere | {name} com tatuagens por todo o lado
+fd38 | {name} as a superhero villain | {name} em versão vilão
+fd39 | {name} in a cowboy hat | {name} com chapéu de cowboy
+fd40 | {name} after a haircut gone wrong | {name} depois de um corte de cabelo desastroso

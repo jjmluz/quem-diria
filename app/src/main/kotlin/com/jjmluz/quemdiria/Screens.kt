@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -70,10 +71,16 @@ val PlayerColours = listOf(
 fun QuemDiriaApp(viewModel: RoomViewModel) {
     val room by viewModel.room.collectAsStateWithLifecycle()
     val invite by viewModel.invite.collectAsStateWithLifecycle()
+    val button by viewModel.button.collectAsStateWithLifecycle()
+    val narrator by viewModel.narratorOn.collectAsStateWithLifecycle()
+    val paused by viewModel.paused.collectAsStateWithLifecycle()
     Box(Modifier.fillMaxSize().background(Background)) {
-        when (room.phase) {
-            Phase.LOBBY -> LobbyScreen(room, invite)
-            Phase.STARTED -> StartedScreen(room)
+        val game = room.game
+        if (room.phase == Phase.GAME && game != null) {
+            GameScreen(room, game)
+            if (paused) PauseOverlay()
+        } else {
+            LobbyScreen(room, invite, button, narrator)
         }
     }
 }
@@ -90,7 +97,7 @@ fun Logo(size: Int) {
 }
 
 @Composable
-private fun LobbyScreen(room: Room, invite: Invite?) {
+private fun LobbyScreen(room: Room, invite: Invite?, button: LobbyButton, narrator: Boolean) {
     Column(Modifier.fillMaxSize().padding(horizontal = 56.dp, vertical = 28.dp)) {
         Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(56.dp)) {
             Column(Modifier.width(300.dp)) {
@@ -101,13 +108,31 @@ private fun LobbyScreen(room: Room, invite: Invite?) {
             Players(room, Modifier.weight(1f))
         }
         Spacer(Modifier.height(12.dp))
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        // Left and right move between the buttons; OK presses the one that's lit.
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val mode = stringResource(if (room.mode == Mode.ADULTS) R.string.mode_adults else R.string.mode_family)
+            Pill(focused = button == LobbyButton.MODE) {
+                if (button == LobbyButton.MODE) OkIcon()
+                Label(mode, colour = if (button == LobbyButton.MODE) TextColour else Muted)
+            }
+            Pill(focused = button == LobbyButton.NARRATOR) {
+                if (button == LobbyButton.NARRATOR) OkIcon()
+                Label(
+                    stringResource(if (narrator) R.string.narrator_on else R.string.narrator_off),
+                    colour = if (button == LobbyButton.NARRATOR) TextColour else Muted,
+                )
+            }
             val missing = Lobby.MIN_PLAYERS - room.players.size
+            val focused = button == LobbyButton.START
             if (missing > 0) {
-                Pill { Label(pluralStringResource(R.plurals.players_missing, missing, missing)) }
+                Pill(focused = focused) { Label(pluralStringResource(R.plurals.players_missing, missing, missing)) }
             } else {
-                Pill(highlighted = true) {
-                    OkIcon()
+                Pill(highlighted = true, focused = focused) {
+                    if (focused) OkIcon()
                     Label(stringResource(R.string.start), colour = TextColour)
                 }
             }
@@ -234,34 +259,16 @@ fun Avatar(player: Player, size: Dp) {
     }
 }
 
+/**
+ * A hint or button pill. [highlighted] when it's the thing to do; [focused] when OK would press it, shown
+ * with an outline.
+ */
 @Composable
-private fun StartedScreen(room: Room) {
-    Column(
-        Modifier.fillMaxSize().padding(48.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Logo(56)
-        Spacer(Modifier.height(36.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy((-12).dp)) {
-            room.players.forEach { Avatar(it, 72.dp) }
-        }
-        Spacer(Modifier.height(36.dp))
-        BasicText(stringResource(R.string.coming_soon), style = TextStyle(color = TextColour, fontSize = 24.sp))
-        Spacer(Modifier.height(36.dp))
-        Pill {
-            BackIcon()
-            Label(stringResource(R.string.back_to_lobby))
-        }
-    }
-}
-
-/** The hint pill at the bottom of the screen; [highlighted] when OK will do something. */
-@Composable
-private fun Pill(highlighted: Boolean = false, content: @Composable () -> Unit) {
+fun Pill(highlighted: Boolean = false, focused: Boolean = false, content: @Composable () -> Unit) {
     Row(
         Modifier
             .background(if (highlighted) Accent.copy(alpha = 0.25f) else Card, CircleShape)
+            .then(if (focused) Modifier.border(2.dp, Accent, CircleShape) else Modifier)
             .padding(horizontal = 22.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -269,13 +276,13 @@ private fun Pill(highlighted: Boolean = false, content: @Composable () -> Unit) 
 }
 
 @Composable
-private fun Label(text: String, colour: Color = Muted) {
+fun Label(text: String, colour: Color = Muted) {
     BasicText(text, style = TextStyle(color = colour, fontSize = 18.sp, fontWeight = FontWeight.SemiBold))
 }
 
 /** The remote's OK button: the D-pad's ring with its centre lit. */
 @Composable
-private fun OkIcon() {
+fun OkIcon() {
     Canvas(Modifier.size(26.dp)) {
         drawCircle(TextColour, radius = size.minDimension / 2 - 1.5.dp.toPx(), style = Stroke(2.dp.toPx()))
         drawCircle(Accent, radius = size.minDimension * 0.22f)
@@ -284,7 +291,7 @@ private fun OkIcon() {
 
 /** The remote's Back button: a curved arrow. */
 @Composable
-private fun BackIcon() {
+fun BackIcon() {
     Canvas(Modifier.size(26.dp)) {
         val w = size.width
         val stroke = 2.5.dp.toPx()
@@ -300,7 +307,7 @@ private fun BackIcon() {
     }
 }
 
-private fun decode(jpeg: ByteArray): ImageBitmap? =
+fun decode(jpeg: ByteArray): ImageBitmap? =
     BitmapFactory.decodeByteArray(jpeg, 0, jpeg.size)?.asImageBitmap()
 
 /** [text] as a QR code, one pixel per module, to be scaled up without smoothing. */

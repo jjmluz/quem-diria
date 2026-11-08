@@ -58,5 +58,5 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ANDROID_SERIAL=<tv-ip>:5555 ./gradlew testDebugUnitTest installRelease
 ```
 
-The release build is signed with the debug key, so it installs directly. Notes for coding agents (and anyone
-picking this up): `AGENTS.md`.
+The release build is signed with the debug key, so it installs directly. Notes for coding agents live in a local
+`AGENTS.md`, kept out of git because it describes one home's setup.

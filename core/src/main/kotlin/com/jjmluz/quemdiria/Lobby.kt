@@ -46,8 +46,9 @@ sealed interface JoinResult {
  * The players in the room and the game's phase. Phones act through a secret token handed out on [join],
  * so one phone can't rename or remove another player. Safe to call from the server's threads.
  */
-class Lobby(private val maxPlayers: Int = MAX_PLAYERS) {
-    private class Seat(val token: String, var player: Player, var streams: Int = 0)
+class Lobby(private val maxPlayers: Int = MAX_PLAYERS, private val robotRandom: Random = Random.Default) {
+    /** [robotDrawing] is set for a robot: a test player with no phone, who answers by itself (see [addRobot]). */
+    private class Seat(val token: String, var player: Player, var streams: Int = 0, val robotDrawing: ByteArray? = null)
 
     private val seats = mutableListOf<Seat>()
     private var nextId = 1
@@ -72,6 +73,26 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS) {
         seats += seat
         publish()
         return JoinResult.Joined(seat.token, seat.player.id)
+    }
+
+    /**
+     * Adds a test player with no phone, for trying the game on the TV without three phones. It counts as
+     * connected, and answers every stage at random the moment it opens; its drawing is always [picture],
+     * which is its selfie too. It stays until the app closes. A name already taken gets a number added.
+     */
+    @Synchronized
+    fun addRobot(name: String, picture: ByteArray): JoinResult {
+        if (phase != Phase.LOBBY) return JoinResult.Started
+        if (seats.size >= maxPlayers) return JoinResult.Full
+        val base = cleanName(name) ?: return JoinResult.BadName
+        val free = (sequenceOf(base) + generateSequence(2) { it + 1 }.map { "${base.take(MAX_NAME - 3)} $it" })
+            .first { !taken(it, except = null) }
+        val colour = (0 until maxPlayers).first { c -> seats.none { it.player.colour == c } }
+        val player = Player(nextId++, free, colour, picture, 1, connected = true)
+        val seat = Seat(newToken(), player, robotDrawing = picture)
+        seats += seat
+        publish()
+        return JoinResult.Joined(seat.token, player.id)
     }
 
     /** The player holding [token], or null if there's none (the TV restarted, or they left). */
@@ -207,7 +228,29 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS) {
     private fun taken(name: String, except: Seat?) =
         seats.any { it !== except && it.player.name.equals(name, ignoreCase = true) }
 
+    /** Every robot that hasn't answered this stage yet does, at random. Paused games refuse, and wait. */
+    private fun robotsPlay(g: Game): Game {
+        val present = present()
+        var game = g
+        for (seat in seats) {
+            val picture = seat.robotDrawing ?: continue
+            val id = seat.player.id
+            game = when (game.stage) {
+                Stage.VOTE -> if (id in game.votes) null else game.vote(id, present.random(robotRandom), present)
+                Stage.ANSWER -> if (id in game.answers) null else game.answer(id, robotRandom.nextInt(4), present)
+                Stage.DRAW -> if (id in game.drawings) null else game.draw(id, picture, present)
+                Stage.PICK -> {
+                    val others = game.drawings.keys - id
+                    if (id in game.picks || others.isEmpty()) null else game.pick(id, others.random(robotRandom), present)
+                }
+                else -> null
+            } ?: game
+        }
+        return game
+    }
+
     private fun publish() {
+        game = game?.let(::robotsPlay)
         game?.let { lastSerial = it.serial }
         _room.value = Room(seats.map { it.player }, phase, mode, game)
     }

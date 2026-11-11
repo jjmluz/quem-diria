@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.net.Network
+import android.os.SystemClock
 import android.util.Log
 import android.view.KeyEvent
 import androidx.lifecycle.AndroidViewModel
@@ -195,6 +196,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         val ok = keyCode in OK_KEYS
         val back = keyCode == KeyEvent.KEYCODE_BACK
         if (room.phase == Phase.LOBBY) {
+            if (!(ok && _button.value == LobbyButton.START)) robotPresses = 0
             return when {
                 keyCode == KeyEvent.KEYCODE_DPAD_LEFT -> move(-1)
                 keyCode == KeyEvent.KEYCODE_DPAD_RIGHT -> move(1)
@@ -263,8 +265,29 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
                 prefs.edit().putBoolean("narrator", _narrator.value).apply()
                 if (_narrator.value) narrator.say(getApplication<Application>().getString(R.string.narrator_hello))
             }
-            LobbyButton.START -> startGame()
+            LobbyButton.START -> if (room.value.canStart) startGame() else countRobotPress()
         }
+    }
+
+    private var robotPresses = 0
+    private var lastRobotPress = 0L
+
+    /**
+     * OK pressed five times in a row on "N more players needed" adds two robots, so the game can be tried on
+     * the TV with one phone (or none). Presses more than [ROBOT_PRESS_GAP_MS] apart start the count again.
+     */
+    private fun countRobotPress() {
+        val now = SystemClock.elapsedRealtime()
+        robotPresses = if (now - lastRobotPress > ROBOT_PRESS_GAP_MS) 1 else robotPresses + 1
+        lastRobotPress = now
+        if (robotPresses < ROBOT_PRESSES) return
+        robotPresses = 0
+        val app = getApplication<Application>()
+        app.resources.getStringArray(R.array.robot_names).forEachIndexed { i, name ->
+            val picture = app.assets.open("robots/bot${i + 1}.jpg").use { it.readBytes() }
+            lobby.addRobot(name, picture)
+        }
+        sounds.play(Sounds.Kind.ANSWER)
     }
 
     /** Starts a game, preferring questions this TV hasn't played lately; once all have been, starts over. */
@@ -312,6 +335,8 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private companion object {
+        const val ROBOT_PRESSES = 5
+        const val ROBOT_PRESS_GAP_MS = 2_000L
         val OK_KEYS = setOf(
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER, KeyEvent.KEYCODE_BUTTON_A,
         )

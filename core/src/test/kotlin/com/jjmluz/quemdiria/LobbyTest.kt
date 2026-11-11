@@ -149,4 +149,52 @@ class LobbyTest {
         lobby.skip(2)
         assertEquals(Stage.VOTE, lobby.room.value.game?.stage)
     }
+
+    @Test
+    fun robotsAnswerEveryStageAtOnce() {
+        val lobby = Lobby()
+        val ana = lobby.joined("Ana")
+        lobby.streamChanged(ana.token, open = true)
+        val picture = byteArrayOf(1, 2, 3)
+        val rui = assertIs<JoinResult.Joined>(lobby.addRobot("Robô", picture))
+        val eva = assertIs<JoinResult.Joined>(lobby.addRobot("Robô", picture))
+        assertEquals(listOf("Ana", "Robô", "Robô 2"), lobby.room.value.players.map { it.name })
+        assertTrue(lobby.room.value.players.all { it.connected })
+        assertTrue(lobby.room.value.canStart)
+        val robots = setOf(rui.id, eva.id)
+
+        lobby.start(deck, now = 0)
+        var game = lobby.room.value.game!!
+        assertEquals(Stage.VOTE, game.stage)
+        assertEquals(robots, game.votes.keys)
+        // Only Ana is left to answer: her vote ends the stage.
+        lobby.vote(ana.token, rui.id)
+        lobby.tick(1)
+        assertEquals(Stage.VOTE_REVEAL, lobby.room.value.game!!.stage)
+
+        // On to a spotlight: robots guess, draw their picture and pick someone else's drawing.
+        while (lobby.room.value.game!!.stage != Stage.ANSWER) lobby.skip(2)
+        assertTrue(robots.all { it in lobby.room.value.game!!.answers })
+        lobby.skip(3)
+        lobby.skip(4)
+        game = lobby.room.value.game!!
+        assertEquals(Stage.DRAW, game.stage)
+        assertEquals(robots - game.spotlightId!!, game.drawings.keys)
+        assertTrue(game.drawings.values.all { it.contentEquals(picture) })
+        if (game.spotlightId != ana.id) lobby.draw(ana.token, byteArrayOf(9))
+        lobby.tick(5)
+        game = lobby.room.value.game!!
+        assertEquals(Stage.PICK, game.stage)
+        for (id in robots) {
+            val pick = game.picks[id]
+            if (game.drawings.keys.any { it != id }) assertTrue(pick != null && pick != id) else assertNull(pick)
+        }
+    }
+
+    @Test
+    fun robotsOnlyJoinTheLobbyWhileThereIsRoom() {
+        val lobby = Lobby(maxPlayers = 3)
+        repeat(3) { assertIs<JoinResult.Joined>(lobby.addRobot("R", byteArrayOf(1))) }
+        assertEquals(JoinResult.Full, lobby.addRobot("R", byteArrayOf(1)))
+    }
 }

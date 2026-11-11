@@ -15,6 +15,11 @@
     <string name="mode_adults">Questions: adults</string>
     <string name="narrator_on">Narrator on</string>
     <string name="narrator_off">Narrator off</string>
+    <!-- Test players added by pressing the "players needed" hint five times. -->
+    <string-array name="robot_names">
+        <item>Robot Rui</item>
+        <item>Robot Eva</item>
+    </string-array>
     <string name="narrator_hello">Hello! I\'ll read the questions.</string>
     <string name="question_of">Question %1$d of %2$d</string>
     <string name="final_round">Final round · double points</string>

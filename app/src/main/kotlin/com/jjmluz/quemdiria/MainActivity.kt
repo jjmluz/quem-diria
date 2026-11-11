@@ -5,16 +5,31 @@ import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val viewModel: RoomViewModel by viewModels()
     private val usedKeys = mutableSetOf<Int>()
 
+    /** The TV's own dialog asking whether this app may see Google Photos (through Photos TV). */
+    private val askPhotos = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        viewModel.onPermission(it)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContent { QuemDiriaApp(viewModel) }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.askPermission.collect { if (it) askPhotos.launch(GooglePhotos.PERMISSION) }
+            }
+        }
     }
 
     override fun onStart() {

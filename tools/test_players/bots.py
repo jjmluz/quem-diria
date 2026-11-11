@@ -60,7 +60,7 @@ class Bot:
         if stage == "VOTE" and game["voted"] is None:
             # Everyone can vote for anyone, themselves included.
             todo = lambda: self.act("/api/vote", f"target={random.choice(others + [self.id])}".encode())
-        elif stage == "ANSWER" and game["answered"] is None:
+        elif stage in ("ANSWER", "PHOTO") and game["answered"] is None:
             todo = lambda: self.act("/api/answer", f"option={random.randrange(4)}".encode())
         elif stage == "DRAW" and not me_spotlight and not game["drew"]:
             todo = lambda: self.act("/api/drawing", self.selfie, "image/jpeg")

@@ -421,11 +421,16 @@ class WebServer(
                     append(",\"question\":").append(jsonString(text.withName(name)))
                     append(",\"options\":[").append(step.question.options.joinToString(",") { jsonString(it) }).append(']')
                 }
+                is Step.Photo -> {
+                    append(",\"question\":").append(jsonString(step.question.text.withName(name)))
+                    append(",\"options\":[").append(step.question.options.joinToString(",") { jsonString(it) }).append(']')
+                }
                 else -> {}
             }
             append(",\"voted\":").append(game.votes[you] ?: "null")
             append(",\"answered\":").append(game.answers[you] ?: "null")
             if (game.stage == Stage.ANSWER_REVEAL) append(",\"truth\":").append(game.answers[spotlight] ?: "null")
+            if (game.stage == Stage.PHOTO_REVEAL) append(",\"truth\":").append((game.step as Step.Photo).question.truth)
             append(",\"drew\":").append(you in game.drawings)
             append(",\"picked\":").append(game.picks[you] ?: "null")
             append(",\"drawers\":[").append(game.galleryOrder.joinToString(",")).append(']')

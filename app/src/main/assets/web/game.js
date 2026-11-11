@@ -9,6 +9,7 @@ Object.assign(STRINGS.en, {
   total: '{n} points · {rank}', total1: '1 point · {rank}', rank1: '1st', rank2: '2nd', rank3: '3rd', rankN: '{n}th',
   youInSpotlight: 'You’re in the spotlight! Answer for yourself:',
   guessFor: 'Guess what {name} answered:',
+  photoOf: 'A photo of {name}: look at the TV!',
   beingDrawn: 'The others are drawing you… 😬', drawn: 'Sent! Waiting for the others.',
   draw: 'Draw:', send: 'Send', undo: 'Undo', sendFailed: 'That didn’t send. Try again.',
   pickDrawing: 'Pick the best drawing', yours: 'Yours',
@@ -25,6 +26,7 @@ Object.assign(STRINGS.pt, {
   total: '{n} pontos · {rank}', total1: '1 ponto · {rank}', rank1: '1.º', rank2: '2.º', rank3: '3.º', rankN: '{n}.º',
   youInSpotlight: 'Estás em destaque! Responde por ti:',
   guessFor: 'Adivinha o que {name} respondeu:',
+  photoOf: 'Uma foto de {name}: olha para a TV!',
   beingDrawn: 'Os outros estão a desenhar-te… 😬', drawn: 'Enviado! À espera dos outros.',
   draw: 'Desenha:', send: 'Enviar', undo: 'Desfazer', sendFailed: 'Não foi enviado. Tenta outra vez.',
   pickDrawing: 'Escolhe o melhor desenho', yours: 'O teu',
@@ -86,7 +88,7 @@ function renderGame(room) {
   if (key === gameKey) { runTimer(); return; }
   const newStage = !gameKey.startsWith(g.serial + '|');
   gameKey = key;
-  if (newStage && ['VOTE', 'ANSWER', 'DRAW', 'PICK'].includes(g.stage) && navigator.vibrate) navigator.vibrate(60);
+  if (newStage && ['VOTE', 'ANSWER', 'PHOTO', 'DRAW', 'PICK'].includes(g.stage) && navigator.vibrate) navigator.vibrate(60);
   if (newStage) pad = null;
 
   const me = playerById(room, room.you);
@@ -104,6 +106,7 @@ function renderGame(room) {
   switch (g.stage) {
     case 'VOTE': renderVote(room, g, body); break;
     case 'ANSWER': renderAnswer(room, g, body, spotlight); break;
+    case 'PHOTO': renderAnswer(room, g, body, spotlight, true); break;
     case 'DRAW': renderDraw(room, g, body, spotlight); break;
     case 'PICK': renderPick(room, g, body); break;
     case 'END': renderEnd(room, g, body); break;
@@ -168,10 +171,12 @@ function renderVote(room, g, body) {
   body.append(grid);
 }
 
-function renderAnswer(room, g, body, spotlight) {
+/** The four choices of a spotlight question, or of a photo question ([photo]: everyone guesses, on the TV's photo). */
+function renderAnswer(room, g, body, spotlight, photo) {
   const mine = g.spotlight === room.you;
+  const name = spotlight ? spotlight.name : '';
   body.append(
-    el('p', { class: 'kicker' }, mine ? T.youInSpotlight : fill(T.guessFor, { name: spotlight ? spotlight.name : '' })),
+    el('p', { class: 'kicker' }, photo ? fill(T.photoOf, { name }) : mine ? T.youInSpotlight : fill(T.guessFor, { name })),
     el('h2', { class: 'question' }, g.question));
   const list = el('div', { class: 'choices' });
   g.options.forEach((text, i) => {

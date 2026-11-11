@@ -54,11 +54,11 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
-private val Green = Color(0xFF7BD389)
+internal val Green = Color(0xFF7BD389)
 
 /** The TV during a game: one screen per stage, faded from one to the next. */
 @Composable
-fun GameScreen(room: Room, game: Game) {
+fun GameScreen(room: Room, game: Game, photos: Map<String, androidx.compose.ui.graphics.ImageBitmap>) {
     AnimatedContent(
         targetState = game,
         // A new stage fades in; votes coming in within a stage just update it. The outgoing screen keeps its
@@ -76,6 +76,8 @@ fun GameScreen(room: Room, game: Game) {
                 Stage.DRAW -> DrawScreen(room, g)
                 Stage.PICK -> GalleryScreen(room, g, reveal = false)
                 Stage.PICK_REVEAL -> GalleryScreen(room, g, reveal = true)
+                Stage.PHOTO -> PhotoScreen(room, g, photos, reveal = false)
+                Stage.PHOTO_REVEAL -> PhotoScreen(room, g, photos, reveal = true)
                 Stage.SCORES -> ScoresScreen(room, g)
                 Stage.FINAL_INTRO -> FinalIntro()
                 Stage.END -> EndScreen(room, g)
@@ -88,7 +90,7 @@ fun GameScreen(room: Room, game: Game) {
 @Composable
 private fun TimerRing(game: Game, total: Long, size: Dp = 64.dp) {
     // Reveals just pause before moving on; a countdown there would only distract.
-    if (game.deadline == 0L || game.stage !in setOf(Stage.VOTE, Stage.ANSWER, Stage.DRAW, Stage.PICK)) return
+    if (game.deadline == 0L || game.stage !in setOf(Stage.VOTE, Stage.ANSWER, Stage.PHOTO, Stage.DRAW, Stage.PICK)) return
     val now by produceState(System.currentTimeMillis(), game.serial, game.deadline) {
         while (true) {
             value = System.currentTimeMillis()
@@ -118,8 +120,9 @@ private fun TimerRing(game: Game, total: Long, size: Dp = 64.dp) {
 }
 
 @Composable
-private fun Header(title: String, game: Game, total: Long) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+internal fun Header(title: String, game: Game, total: Long) {
+    // As tall as the timer, so the screen doesn't jump when the reveal drops it.
+    Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
         BasicText(title, style = TextStyle(color = Yellow, fontSize = 20.sp, fontWeight = FontWeight.Bold))
         Spacer(Modifier.weight(1f))
         TimerRing(game, total)
@@ -131,7 +134,7 @@ private fun Header(title: String, game: Game, total: Long) {
  * names and questions vary in length, and the user wants every word visible.
  */
 @Composable
-private fun Text(text: String, size: TextUnit, colour: Color = TextColour, weight: FontWeight = FontWeight.Normal,
+internal fun Text(text: String, size: TextUnit, colour: Color = TextColour, weight: FontWeight = FontWeight.Normal,
                  align: TextAlign = TextAlign.Start, modifier: Modifier = Modifier, lines: Int = Int.MAX_VALUE) {
     BasicText(
         text,
@@ -145,7 +148,7 @@ private fun Text(text: String, size: TextUnit, colour: Color = TextColour, weigh
 
 /** Who has answered so far: everyone's avatar, faded until they've answered. */
 @Composable
-private fun Progress(players: List<Player>, done: Set<Int>) {
+internal fun Progress(players: List<Player>, done: Set<Int>) {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         players.forEach { p ->
             Box(Modifier.alpha(if (p.id in done) 1f else 0.3f)) {
@@ -162,7 +165,7 @@ private fun Progress(players: List<Player>, done: Set<Int>) {
 }
 
 @Composable
-private fun BottomHint(text: String, okLabel: String?) {
+internal fun BottomHint(text: String, okLabel: String?) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)) {
         Pill { Label(text) }
         if (okLabel != null) {
@@ -232,7 +235,7 @@ private fun VoteReveal(room: Room, game: Game) {
 
 /** "+2" next to each player who scored at the last reveal. */
 @Composable
-private fun Gains(room: Room, game: Game) {
+internal fun Gains(room: Room, game: Game) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally)) {
         room.players.filter { (game.gained[it.id] ?: 0) > 0 }.forEach { p ->
             Row(

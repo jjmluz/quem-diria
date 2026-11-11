@@ -11,12 +11,20 @@ sealed interface Step {
      * others draw on their selfie and everyone picks the best drawing. */
     data class Spotlight(val playerId: Int, val question: SpotlightItem, val prompt: Item) : Step
 
+    /**
+     * A question about one of [playerId]'s photos from Google Photos, played after their spotlight turn when
+     * every player is linked to a person there. Everyone guesses, and the photo's own date or place is right.
+     */
+    data class Photo(val playerId: Int, val question: PhotoQuestion) : Step
+
     data object Scores : Step
     data object FinalIntro : Step
 }
 
 /** What's happening right now. Stages that take answers end early once everyone connected has answered. */
-enum class Stage { VOTE, VOTE_REVEAL, ANSWER, ANSWER_REVEAL, DRAW, PICK, PICK_REVEAL, SCORES, FINAL_INTRO, END }
+enum class Stage {
+    VOTE, VOTE_REVEAL, ANSWER, ANSWER_REVEAL, DRAW, PICK, PICK_REVEAL, PHOTO, PHOTO_REVEAL, SCORES, FINAL_INTRO, END
+}
 
 /** How the room voted on one question: player id to the votes they got. Kept for the end-of-game awards. */
 data class Tally(val question: String, val counts: Map<Int, Int>)
@@ -65,7 +73,13 @@ data class Game(
     private val seed: Long = 0,
 ) {
     val step: Step? get() = steps.getOrNull(index)
-    val spotlightId: Int? get() = (step as? Step.Spotlight)?.playerId
+    /** The player the step is about: in the spotlight, or in the photo. */
+    val spotlightId: Int?
+        get() = when (val s = step) {
+            is Step.Spotlight -> s.playerId
+            is Step.Photo -> s.playerId
+            else -> null
+        }
     val double: Boolean get() = (step as? Step.Vote)?.double == true
 
     /** The number of this vote among all the votes, and how many there are, for "Question 3 of 10". */
@@ -95,7 +109,7 @@ data class Game(
     }
 
     fun answer(player: Int, option: Int, present: Set<Int>): Game? {
-        if (paused || stage != Stage.ANSWER || option !in 0..3 || player !in present) return null
+        if (paused || (stage != Stage.ANSWER && stage != Stage.PHOTO) || option !in 0..3 || player !in present) return null
         return copy(answers = answers + (player to option))
     }
 
@@ -123,7 +137,7 @@ data class Game(
         val waiting = active.intersect(present)
         return when (stage) {
             Stage.VOTE -> waiting.isNotEmpty() && waiting.all { it in votes }
-            Stage.ANSWER -> waiting.isNotEmpty() && waiting.all { it in answers }
+            Stage.ANSWER, Stage.PHOTO -> waiting.isNotEmpty() && waiting.all { it in answers }
             Stage.DRAW -> {
                 val drawers = waiting - setOfNotNull(spotlightId)
                 drawers.isNotEmpty() && drawers.all { it in drawings }
@@ -154,7 +168,8 @@ data class Game(
             else -> enter(index + 1, now, present)
         }
         Stage.PICK -> revealPicks(now, galleryOrder)
-        Stage.VOTE_REVEAL, Stage.PICK_REVEAL, Stage.SCORES, Stage.FINAL_INTRO -> enter(index + 1, now, present)
+        Stage.PHOTO -> revealPhoto(now)
+        Stage.VOTE_REVEAL, Stage.PICK_REVEAL, Stage.PHOTO_REVEAL, Stage.SCORES, Stage.FINAL_INTRO -> enter(index + 1, now, present)
         Stage.END -> this
     }
 
@@ -185,6 +200,13 @@ data class Game(
         return at(Stage.ANSWER_REVEAL, now + REVEAL_MS).copy(scores = addPoints(points), gained = points)
     }
 
+    private fun revealPhoto(now: Long): Game {
+        val truth = (step as Step.Photo).question.truth
+        // Everyone guesses, the player in the photo too: it isn't always easy to place your own photos.
+        val points = answers.filterValues { it == truth }.mapValues { GUESS_POINTS }
+        return at(Stage.PHOTO_REVEAL, now + REVEAL_MS).copy(scores = addPoints(points), gained = points)
+    }
+
     private fun revealPicks(now: Long, galleryOrder: List<Int>): Game {
         val counts = picks.values.groupingBy { it }.eachCount()
         val points = drawings.keys.associateWith { (counts[it] ?: 0) * PICK_POINTS }
@@ -211,6 +233,8 @@ data class Game(
             is Step.Vote -> blank.at(Stage.VOTE, now + if (next.double) FINAL_VOTE_MS else VOTE_MS)
             is Step.Spotlight ->
                 if (next.playerId in present) blank.at(Stage.ANSWER, now + ANSWER_MS) else blank.enter(i + 1, now, present)
+            is Step.Photo ->
+                if (next.playerId in present) blank.at(Stage.PHOTO, now + PHOTO_MS) else blank.enter(i + 1, now, present)
             Step.Scores -> blank.at(Stage.SCORES, now + SCORES_MS)
             Step.FinalIntro -> blank.at(Stage.FINAL_INTRO, now + FINAL_INTRO_MS)
         }
@@ -237,6 +261,7 @@ data class Game(
         const val DRAW_MS = 75_000L
         const val PICK_MS = 30_000L
         const val PICK_REVEAL_MS = 10_000L
+        const val PHOTO_MS = 25_000L
         const val SCORES_MS = 8_000L
         const val FINAL_INTRO_MS = 5_000L
 
@@ -247,12 +272,19 @@ data class Game(
         /** Up to this many players get a spotlight turn, which keeps a game to about 15 minutes. */
         const val SPOTLIGHTS = 4
 
+        /** Photo questions after each spotlight turn, when everyone is linked to Google Photos. */
+        const val PHOTOS_PER_TURN = 2
+
         /**
          * The order of a game: three questions, then each spotlight turn followed by the scores and two more
          * questions, and a final of three questions worth double. Questions are taken from the front of each
          * list, so put the ones not played recently first; a short list is reused from its start.
+         *
+         * [photos] are questions about each player's photos. They're played only when every player has a list
+         * (every one is linked to Google Photos), up to [PHOTOS_PER_TURN] after each spotlight turn; a player
+         * whose list is empty (no usable photos) just has none.
          */
-        fun plan(players: List<Int>, deck: Deck, random: Random): List<Step> {
+        fun plan(players: List<Int>, deck: Deck, random: Random, photos: Map<Int, List<PhotoQuestion>> = emptyMap()): List<Step> {
             require(deck.votes.isNotEmpty() && deck.spotlights.isNotEmpty() && deck.drawings.isNotEmpty())
             val spotlit = players.shuffled(random).take(SPOTLIGHTS)
             var v = 0
@@ -260,6 +292,9 @@ data class Game(
             val steps = mutableListOf<Step>(vote(), vote(), vote())
             spotlit.forEachIndexed { i, player ->
                 steps += Step.Spotlight(player, deck.spotlights[i % deck.spotlights.size], deck.drawings[i % deck.drawings.size])
+                if (players.all { it in photos }) {
+                    photos[player].orEmpty().take(PHOTOS_PER_TURN).forEach { steps += Step.Photo(player, it) }
+                }
                 steps += Step.Scores
                 if (i < spotlit.lastIndex) {
                     steps += vote()

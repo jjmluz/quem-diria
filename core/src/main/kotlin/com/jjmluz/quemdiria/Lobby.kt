@@ -18,6 +18,8 @@ class Player(
     val selfieVersion: Int,
     /** True while their phone has the page open (an event stream is connected). */
     val connected: Boolean,
+    /** The Google Photos person the TV linked them to (that person's key there), or null. */
+    val person: String? = null,
 )
 
 enum class Phase { LOBBY, GAME }
@@ -31,6 +33,8 @@ data class Room(
     val game: Game? = null,
 ) {
     val canStart: Boolean get() = phase == Phase.LOBBY && players.size >= Lobby.MIN_PLAYERS
+    /** Every player is linked to a person in Google Photos, so the game has photo questions. */
+    val allLinked: Boolean get() = players.isNotEmpty() && players.all { it.person != null }
     fun player(id: Int?): Player? = players.firstOrNull { it.id == id }
 }
 
@@ -138,6 +142,15 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS, private val robotRandom: 
         }
     }
 
+    /** Links player [id] to a Google Photos person ([person] is its key), or unlinks them with null. */
+    @Synchronized
+    fun link(id: Int, person: String?): Boolean {
+        val seat = seats.firstOrNull { it.player.id == id } ?: return false
+        seat.player = seat.player.copy(person = person)
+        publish()
+        return true
+    }
+
     /** The player holding [token], for the server to say who "you" are. */
     @Synchronized
     fun idFor(token: String): Int? = seat(token)?.player?.id
@@ -149,14 +162,17 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS, private val robotRandom: 
         publish()
     }
 
-    /** Starts a game from [deck] (questions not played recently first) if there are enough players. */
+    /**
+     * Starts a game from [deck] (questions not played recently first) if there are enough players. [photos]
+     * are questions about each player's photos, played only if every player has a list (see [Game.plan]).
+     */
     @Synchronized
-    fun start(deck: Deck, now: Long, random: Random = Random.Default): Boolean {
+    fun start(deck: Deck, now: Long, random: Random = Random.Default, photos: Map<Int, List<PhotoQuestion>> = emptyMap()): Boolean {
         if (!_room.value.canStart) return false
         val ids = seats.map { it.player.id }
         // Numbered on from the last game: phones keep each drawing they load by its stage's number, so
         // starting again from 0 showed them an earlier game's drawings.
-        game = Game.start(Game.plan(ids, deck, random), now, ids.toSet(), seed = random.nextLong(), serial = lastSerial)
+        game = Game.start(Game.plan(ids, deck, random, photos), now, ids.toSet(), seed = random.nextLong(), serial = lastSerial)
         phase = Phase.GAME
         publish()
         return true
@@ -237,7 +253,7 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS, private val robotRandom: 
             val id = seat.player.id
             game = when (game.stage) {
                 Stage.VOTE -> if (id in game.votes) null else game.vote(id, present.random(robotRandom), present)
-                Stage.ANSWER -> if (id in game.answers) null else game.answer(id, robotRandom.nextInt(4), present)
+                Stage.ANSWER, Stage.PHOTO -> if (id in game.answers) null else game.answer(id, robotRandom.nextInt(4), present)
                 Stage.DRAW -> if (id in game.drawings) null else game.draw(id, picture, present)
                 Stage.PICK -> {
                     val others = game.drawings.keys - id
@@ -278,4 +294,5 @@ private fun Player.copy(
     selfie: ByteArray? = this.selfie,
     selfieVersion: Int = this.selfieVersion,
     connected: Boolean = this.connected,
-) = Player(id, name, colour, selfie, selfieVersion, connected)
+    person: String? = this.person,
+) = Player(id, name, colour, selfie, selfieVersion, connected, person)

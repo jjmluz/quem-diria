@@ -8,6 +8,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- Google Photos People, through the Photos TV app (its GameProvider); the TV asks first. -->
+    <uses-permission android:name="com.jjmluz.photostv.permission.GAMES" />
+    <queries>
+        <provider android:authorities="com.jjmluz.photostv.games" />
+    </queries>
+
     <application
         android:allowBackup="false"
         android:banner="@drawable/banner"

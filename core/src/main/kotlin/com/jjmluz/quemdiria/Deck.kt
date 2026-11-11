@@ -12,6 +12,19 @@ data class Item(val id: String, val text: String)
 /** A question about the player in the spotlight, with the four answers to choose from. */
 data class SpotlightItem(val id: String, val text: String, val options: List<String>)
 
+/**
+ * A question about a photo from Google Photos: when or where it was taken. [photo] is the photo's key there,
+ * which only the TV uses, to show it. [text] is in the game's language, with `{name}` for the player in it;
+ * [truth] is the index of the right one of the four [options], taken from the photo's own date or place.
+ */
+data class PhotoQuestion(val photo: String, val kind: Kind, val text: String, val options: List<String>, val truth: Int) {
+    enum class Kind { YEAR, PLACE }
+
+    init {
+        require(options.size == 4 && truth in options.indices)
+    }
+}
+
 /** Every question of one mode, in one language. */
 data class Deck(val votes: List<Item>, val spotlights: List<SpotlightItem>, val drawings: List<Item>) {
     companion object {

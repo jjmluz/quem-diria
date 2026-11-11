@@ -75,15 +75,22 @@ fun QuemDiriaApp(viewModel: RoomViewModel) {
     val narrator by viewModel.narratorOn.collectAsStateWithLifecycle()
     val paused by viewModel.paused.collectAsStateWithLifecycle()
     val splash by viewModel.splash.collectAsStateWithLifecycle()
+    val linking by viewModel.linking.collectAsStateWithLifecycle()
+    val faces by viewModel.faces.collectAsStateWithLifecycle()
+    val personNames by viewModel.personNames.collectAsStateWithLifecycle()
+    val photosInstalled by viewModel.photosInstalled.collectAsStateWithLifecycle()
+    val gettingPhotos by viewModel.gettingPhotos.collectAsStateWithLifecycle()
+    val gamePhotos by viewModel.gamePhotos.collectAsStateWithLifecycle()
     Box(Modifier.fillMaxSize().background(Background)) {
         val game = room.game
         if (splash) {
             SplashScreen(onStart = viewModel::onSplashStart, onEnd = viewModel::endSplash)
         } else if (room.phase == Phase.GAME && game != null) {
-            GameScreen(room, game)
+            GameScreen(room, game, gamePhotos)
             paused?.let { PauseOverlay(it, invite) }
         } else {
-            LobbyScreen(room, invite, button, narrator)
+            LobbyScreen(room, invite, button, narrator, faces, photosInstalled, gettingPhotos)
+            linking?.let { LinkingOverlay(room, it, faces, personNames) }
         }
     }
 }
@@ -100,7 +107,10 @@ fun Logo(size: Int) {
 }
 
 @Composable
-private fun LobbyScreen(room: Room, invite: Invite?, button: LobbyButton, narrator: Boolean) {
+private fun LobbyScreen(
+    room: Room, invite: Invite?, button: LobbyButton, narrator: Boolean,
+    faces: Map<String, ImageBitmap>, photosInstalled: Boolean, gettingPhotos: Boolean,
+) {
     Column(Modifier.fillMaxSize().padding(horizontal = 56.dp, vertical = 28.dp)) {
         Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(56.dp)) {
             Column(Modifier.width(300.dp)) {
@@ -108,7 +118,7 @@ private fun LobbyScreen(room: Room, invite: Invite?, button: LobbyButton, narrat
                 Spacer(Modifier.height(16.dp))
                 JoinCard(invite)
             }
-            Players(room, Modifier.weight(1f))
+            Players(room, faces, Modifier.weight(1f))
         }
         Spacer(Modifier.height(12.dp))
         // Left and right move between the buttons; OK presses the one that's lit.
@@ -129,9 +139,21 @@ private fun LobbyScreen(room: Room, invite: Invite?, button: LobbyButton, narrat
                     colour = if (button == LobbyButton.NARRATOR) TextColour else Muted,
                 )
             }
+            if (photosInstalled) {
+                val linked = room.players.count { it.person != null }
+                Pill(highlighted = room.allLinked, focused = button == LobbyButton.PHOTOS) {
+                    if (button == LobbyButton.PHOTOS) OkIcon()
+                    Label(
+                        stringResource(R.string.photos_button, linked, room.players.size),
+                        colour = if (button == LobbyButton.PHOTOS) TextColour else Muted,
+                    )
+                }
+            }
             val missing = Lobby.MIN_PLAYERS - room.players.size
             val focused = button == LobbyButton.START
-            if (missing > 0) {
+            if (gettingPhotos) {
+                Pill(highlighted = true, focused = focused) { Label(stringResource(R.string.getting_photos), colour = TextColour) }
+            } else if (missing > 0) {
                 Pill(focused = focused) { Label(pluralStringResource(R.plurals.players_missing, missing, missing)) }
             } else {
                 Pill(highlighted = true, focused = focused) {
@@ -187,7 +209,7 @@ fun JoinCard(invite: Invite?, caption: String = stringResource(R.string.scan_to_
 }
 
 @Composable
-private fun Players(room: Room, modifier: Modifier) {
+private fun Players(room: Room, faces: Map<String, ImageBitmap>, modifier: Modifier) {
     Column(modifier) {
         Row(verticalAlignment = Alignment.Bottom) {
             BasicText(
@@ -208,7 +230,7 @@ private fun Players(room: Room, modifier: Modifier) {
                 for (col in 0 until 4) {
                     val player = room.players.getOrNull(row * 4 + col)
                     Box(Modifier.weight(1f)) {
-                        if (player != null) PlayerSeat(player) else EmptySeat()
+                        if (player != null) PlayerSeat(player, player.person?.let(faces::get)) else EmptySeat()
                     }
                 }
             }
@@ -217,13 +239,17 @@ private fun Players(room: Room, modifier: Modifier) {
 }
 
 @Composable
-private fun PlayerSeat(player: Player) {
+private fun PlayerSeat(player: Player, face: ImageBitmap?) {
     val alpha by animateFloatAsState(if (player.connected) 1f else 0.4f, label = "connected")
     Column(
         Modifier.fillMaxWidth().alpha(alpha).background(Card, RoundedCornerShape(20.dp)).padding(vertical = 18.dp, horizontal = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Avatar(player, 104.dp)
+        Box {
+            Avatar(player, 104.dp)
+            // Linked to Google Photos: their face there, as a badge.
+            if (player.person != null) PersonBadge(face, Modifier.align(Alignment.BottomEnd))
+        }
         Spacer(Modifier.height(12.dp))
         BasicText(
             player.name,

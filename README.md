@@ -26,6 +26,9 @@ open its page.
   others guess. A right guess is worth 2; the spotlight player gets 1 for each right guess.
 - **Drawing**: then everyone else draws on the spotlight player's selfie ("{name} as a pirate"), and all vote
   for the best drawing: 2 points per vote.
+- **Photos** (when every player is linked to Google Photos): after each spotlight turn, two questions about one
+  of that player's photos, shown on the TV: "Where was this photo taken?" or "In what year?". Everyone guesses,
+  the player in the photo too, and the photo's own place or date is right: 2 points.
 - **Final round**: three last votes, worth double.
 - **The end**: the winner, an "award" for each player (the question the room most often picked them for), and
   the best drawings.
@@ -41,6 +44,14 @@ open its page.
 
 During a game, OK skips the wait ("Don't wait") and Back pauses, offering to leave. Language follows the TV,
 phones included, so the whole room plays in one: Portuguese from Portugal, otherwise English.
+
+## Google Photos
+
+With [Photos TV](https://github.com/jjmluz/photos-tv) installed and signed in on the same TV, the lobby has a
+**Google Photos** button: pick each player with the remote and who they are among the people Google Photos
+recognised (and the family named). The TV asks once whether Quem Diria? may see them. Players are linked again
+by name next time. Photos TV does the talking to Google; this app only asks it for people, photos, places and
+pictures (`GooglePhotos.kt`). Photos are taken at random from each person's newest few hundred, for now.
 
 ## Questions
 

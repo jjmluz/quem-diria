@@ -129,9 +129,11 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     /** The activity should ask for [GooglePhotos.PERMISSION]; it answers with [onPermission]. */
     val askPermission: StateFlow<Boolean> = _askPermission.asStateFlow()
 
-    private val narrator = Narrator(app, language)
+    private val music = Music(app, viewModelScope, Music.TITLE, volume = 0.6f)
+    /** The game's music, under the narrator and the game's sounds: quieter than the room's. */
+    private val gameMusic = Music(app, viewModelScope, Music.GAME, volume = 0.35f)
+    private val narrator = Narrator(app, language) { speaking -> gameMusic.duck(speaking) }
     private val sounds = Sounds()
-    private val music = TitleMusic(app, viewModelScope)
 
     private val _splash = MutableStateFlow(true)
     /** The splash screen shows when the app opens, until it ends or OK skips it. */
@@ -247,8 +249,15 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         updateMusic()
     }
 
-    /** Music in the room only, after the splash: the game has the narrator and its own sounds. */
-    private fun updateMusic() = music.play(foreground && !_splash.value && room.value.phase == Phase.LOBBY)
+    /**
+     * The room's music in the room (after the splash), the game's during the game; only while the app is on
+     * screen.
+     */
+    private fun updateMusic() {
+        val shown = foreground && !_splash.value
+        music.play(shown && room.value.phase == Phase.LOBBY)
+        gameMusic.play(shown && room.value.phase == Phase.GAME)
+    }
 
     /** What the remote's keys do. Returns true for a key it used. */
     fun onKeyDown(keyCode: Int): Boolean {
@@ -606,6 +615,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         narrator.shutdown()
         sounds.release()
         music.release()
+        gameMusic.release()
     }
 
     private companion object {

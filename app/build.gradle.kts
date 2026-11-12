@@ -4,10 +4,11 @@ plugins {
 }
 
 /**
- * Copies the title music (`raquel.ogg` at the project root) into the app's assets as `music/title.ogg`,
- * when it's there. The track isn't ours to share, so it's kept out of git; without it the room is quiet.
+ * Copies the music into the app's assets, when it's there: the room's (`raquel.ogg` at the project root) as
+ * `music/title.ogg`, and the game's (`background_*.m4a`) under their own names in `music/`. The tracks aren't
+ * ours to share, so they're kept out of git; without them the app is quiet.
  */
-abstract class CopyTitleMusic : DefaultTask() {
+abstract class CopyMusic : DefaultTask() {
     @get:InputFiles
     abstract val music: ConfigurableFileCollection
 
@@ -18,17 +19,22 @@ abstract class CopyTitleMusic : DefaultTask() {
     fun copy() {
         val out = outputDir.get().asFile
         out.deleteRecursively()
-        music.files.filter { it.isFile }.forEach { it.copyTo(out.resolve("music/title.ogg"), overwrite = true) }
+        music.files.filter { it.isFile }.forEach {
+            val name = if (it.name == "raquel.ogg") "title.ogg" else it.name
+            it.copyTo(out.resolve("music/$name"), overwrite = true)
+        }
     }
 }
 
-val copyTitleMusic = tasks.register<CopyTitleMusic>("copyTitleMusic") {
-    music.from(rootProject.file("raquel.ogg"))
+val copyMusic = tasks.register<CopyMusic>("copyMusic") {
+    music.from(rootProject.file("raquel.ogg"), rootProject.fileTree(rootProject.projectDir) {
+        include("background_*.m4a")
+    })
 }
 
 androidComponents {
     onVariants { variant ->
-        variant.sources.assets?.addGeneratedSourceDirectory(copyTitleMusic, CopyTitleMusic::outputDir)
+        variant.sources.assets?.addGeneratedSourceDirectory(copyMusic, CopyMusic::outputDir)
     }
 }
 

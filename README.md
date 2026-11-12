@@ -39,8 +39,8 @@ open its page.
 2. Each player scans the QR code with their phone's camera, or opens the address under it.
    Everyone needs to be on the TV's Wi-Fi.
 3. Type a name and tap the circle to take a selfie (optional: without one, the TV shows your initial).
-4. With 3 to 8 players in, pick **Start the game** with the remote. Left and right also reach **Questions:
-   family / adults** and **Narrator on / off**; the TV remembers both.
+4. With 3 to 8 players in, pick **Start the game** with the remote. Left and right also reach **Mode:
+   family / adults** and **Narrator: on / off**; the TV remembers both.
 
 During a game, OK skips the wait ("Don't wait") and Back pauses, offering to leave. Language follows the TV,
 phones included, so the whole room plays in one: Portuguese from Portugal, otherwise English.
@@ -57,7 +57,8 @@ pictures (`GooglePhotos.kt`). Photos are taken at random from each person's newe
 
 `app/src/main/assets/decks/family.txt` and `adults.txt`, English and Portuguese side by side on each line
 (format at the top of each file and in `Deck.parse`). The adults deck mixes cheeky (dating, drinking, money,
-embarrassing stories) and spicy (frank about sex and relationships, with swearing, nothing graphic). The TV
+embarrassing stories) and spicy (frank about sex and relationships, with swearing, nothing graphic). Adults
+mode plays mostly family questions, with about 30% from the adults deck spread through the game. The TV
 remembers which questions it has played and prefers new ones until it has been through them all.
 
 ## Build and install

@@ -27,7 +27,35 @@ data class PhotoQuestion(val photo: String, val kind: Kind, val text: String, va
 
 /** Every question of one mode, in one language. */
 data class Deck(val votes: List<Item>, val spotlights: List<SpotlightItem>, val drawings: List<Item>) {
+    /**
+     * This deck with [other]'s questions mixed in, so that about [share] of each list comes from [other],
+     * spread evenly through it (with 0.3, about every third question). Each deck keeps its own order; when one
+     * runs out, the rest of the other follows. Adults mode is the family deck with [ADULTS_SHARE] of the adults'.
+     */
+    fun mixedWith(other: Deck, share: Double): Deck = Deck(
+        mix(votes, other.votes, share),
+        mix(spotlights, other.spotlights, share),
+        mix(drawings, other.drawings, share),
+    )
+
     companion object {
+        /** How much of an adults game comes from the adults' deck; the rest is the family one. */
+        const val ADULTS_SHARE = 0.3
+
+        /** [a] and [b] interleaved so that [share] of every stretch is from [b]: the evenest spread there is. */
+        private fun <T> mix(a: List<T>, b: List<T>, share: Double): List<T> {
+            val out = ArrayList<T>(a.size + b.size)
+            var i = 0
+            var j = 0
+            while (i < a.size || j < b.size) {
+                val n = out.size
+                // Take from b when the count it's owed by the next slot goes up by one.
+                val fromB = j < b.size && (i >= a.size || Math.floor((n + 1) * share) > Math.floor(n * share))
+                out += if (fromB) b[j++] else a[i++]
+            }
+            return out
+        }
+
         /**
          * Reads a deck file (`assets/decks/family.txt`, `adults.txt`). Lines are `|`-separated, in sections:
          *

@@ -11,10 +11,10 @@
     </plurals>
     <string name="start">Start the game</string>
     <string name="back_to_lobby">Back to the room</string>
-    <string name="mode_family">Questions: family</string>
-    <string name="mode_adults">Questions: adults</string>
-    <string name="narrator_on">Narrator on</string>
-    <string name="narrator_off">Narrator off</string>
+    <string name="mode_family">Mode: family</string>
+    <string name="mode_adults">Mode: adults</string>
+    <string name="narrator_on">Narrator: on</string>
+    <string name="narrator_off">Narrator: off</string>
     <!-- Test players added by pressing the "players needed" hint five times; the same names in every language. -->
     <string-array name="robot_names">
         <item>Artur</item>
@@ -50,7 +50,7 @@
     <string name="end_game">End game</string>
     <string name="scan_to_return">Closed the page? Scan to get back into the game</string>
     <!-- Google Photos, through the Photos TV app -->
-    <string name="photos_button">Google Photos: %1$d/%2$d linked</string>
+    <string name="photos_button">Google Photos: %1$d/%2$d</string>
     <string name="photos_ready">Everyone is linked: photo questions are on!</string>
     <string name="link_title">Link players to Google Photos</string>
     <string name="link_hint">When everyone is linked, the game adds questions about their photos.</string>

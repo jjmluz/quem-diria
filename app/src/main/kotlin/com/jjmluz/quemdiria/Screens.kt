@@ -124,7 +124,8 @@ private fun LobbyScreen(
         // Left and right move between the buttons; OK presses the one that's lit.
         Row(
             Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+            // Tighter with the Google Photos button, so all fit across in Portuguese too.
+            horizontalArrangement = Arrangement.spacedBy(if (photosInstalled) 12.dp else 16.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val mode = stringResource(if (room.mode == Mode.ADULTS) R.string.mode_adults else R.string.mode_family)
@@ -302,7 +303,7 @@ fun Pill(highlighted: Boolean = false, focused: Boolean = false, content: @Compo
         Modifier
             .background(if (highlighted) Accent.copy(alpha = 0.25f) else Card, CircleShape)
             .then(if (focused) Modifier.border(2.dp, Accent, CircleShape) else Modifier)
-            .padding(horizontal = 22.dp, vertical = 12.dp),
+            .padding(horizontal = 18.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) { content() }

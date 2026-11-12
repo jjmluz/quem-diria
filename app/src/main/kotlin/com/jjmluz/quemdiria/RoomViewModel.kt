@@ -568,13 +568,15 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     private fun startGame(photoQuestions: Map<Int, List<PhotoQuestion>>) {
         if (!room.value.canStart) return
         val mode = room.value.mode
-        val file = if (mode == Mode.ADULTS) "decks/adults.txt" else "decks/family.txt"
-        val deck = try {
-            Deck.parse(getApplication<Application>().assets.open(file).bufferedReader().readText(), language)
+        fun read(file: String) = Deck.parse(getApplication<Application>().assets.open(file).bufferedReader().readText(), language)
+        val decks = try {
+            listOf(read("decks/family.txt")) + if (mode == Mode.ADULTS) listOf(read("decks/adults.txt")) else emptyList()
         } catch (e: Exception) {
-            Log.e(TAG, "Can't read $file", e)
+            Log.e(TAG, "Can't read the decks", e)
             return
         }
+        // Adults mode is mostly family questions, with the adults' ones mixed in (see Deck.mixedWith).
+        val deck = Deck(decks.flatMap { it.votes }, decks.flatMap { it.spotlights }, decks.flatMap { it.drawings })
         val key = "used_${mode.name}"
         var used = prefs.getStringSet(key, emptySet())!!
         val random = Random(System.nanoTime())
@@ -584,11 +586,8 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         }
         // Every list played through: forget and start again.
         if (deck.votes.all { it.id in used }) used = emptySet()
-        val ordered = Deck(
-            fresh(deck.votes) { it.id },
-            fresh(deck.spotlights) { it.id },
-            fresh(deck.drawings) { it.id },
-        )
+        fun ordered(d: Deck) = Deck(fresh(d.votes) { it.id }, fresh(d.spotlights) { it.id }, fresh(d.drawings) { it.id })
+        val ordered = if (decks.size == 1) ordered(decks[0]) else ordered(decks[0]).mixedWith(ordered(decks[1]), Deck.ADULTS_SHARE)
         if (!lobby.start(ordered, System.currentTimeMillis(), random, photoQuestions)) return
         loadGamePhotos(lobby.room.value.game!!, lobby.room.value)
         val played = lobby.room.value.game!!.steps.flatMap {

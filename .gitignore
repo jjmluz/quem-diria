@@ -9,6 +9,8 @@ bin/
 
 # Music: the family's own tracks, not ours to share. The build bundles them when they're there.
 /music/
+# Photos kept out of the game, by person and year: the family's names, so not in git.
+/private/
 # A picture the splash screen was drawn after: a reference, not ours to share.
 /dusk.png
 

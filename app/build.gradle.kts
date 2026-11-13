@@ -4,13 +4,16 @@ plugins {
 }
 
 /**
- * Copies the music (the `music` folder at the project root: `lobby.*` for the room, `background_*` for the game)
- * into the app's assets as `music/`, when it's there. The tracks aren't ours to share, so the folder is kept out
- * of git; without it the app is quiet.
+ * Copies the family's own files, kept out of git, into the app's assets under [folder] when they're there:
+ * the music (`music/`: `lobby.*` for the room, `background_*` for the game) and the photo rules
+ * (`private/photo-rules.json`: photos kept out of the game). Without them the app is quiet, with every photo allowed.
  */
-abstract class CopyMusic : DefaultTask() {
+abstract class CopyIntoAssets : DefaultTask() {
     @get:InputFiles
-    abstract val music: ConfigurableFileCollection
+    abstract val files: ConfigurableFileCollection
+
+    @get:Input
+    abstract val folder: Property<String>
 
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
@@ -19,17 +22,24 @@ abstract class CopyMusic : DefaultTask() {
     fun copy() {
         val out = outputDir.get().asFile
         out.deleteRecursively()
-        music.files.filter { it.isFile }.forEach { it.copyTo(out.resolve("music/${it.name}"), overwrite = true) }
+        files.files.filter { it.isFile }.forEach { it.copyTo(out.resolve("${folder.get()}/${it.name}"), overwrite = true) }
     }
 }
 
-val copyMusic = tasks.register<CopyMusic>("copyMusic") {
-    music.from(rootProject.fileTree("music") { include("lobby.*", "background_*") })
+val copyMusic = tasks.register<CopyIntoAssets>("copyMusic") {
+    files.from(rootProject.fileTree("music") { include("lobby.*", "background_*") })
+    folder.set("music")
+}
+
+val copyPhotoRules = tasks.register<CopyIntoAssets>("copyPhotoRules") {
+    files.from(rootProject.fileTree("private") { include("photo-rules.json") })
+    folder.set("private")
 }
 
 androidComponents {
     onVariants { variant ->
-        variant.sources.assets?.addGeneratedSourceDirectory(copyMusic, CopyMusic::outputDir)
+        variant.sources.assets?.addGeneratedSourceDirectory(copyMusic, CopyIntoAssets::outputDir)
+        variant.sources.assets?.addGeneratedSourceDirectory(copyPhotoRules, CopyIntoAssets::outputDir)
     }
 }
 

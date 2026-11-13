@@ -105,6 +105,24 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     /** The linking screen, or null when it's closed. */
     val linking: StateFlow<Linking?> = _linking.asStateFlow()
 
+    /**
+     * Photos kept out of the game (`private/photo-rules.json`, bundled when the build finds it). None without the
+     * file; null if it's there but can't be read, and then no photos are used at all, to be safe.
+     */
+    private val photoRules: PhotoRules? = try {
+        val text = app.assets.open(PHOTO_RULES).bufferedReader().use { it.readText() }
+        val json = org.json.JSONObject(text)
+        PhotoRules.of(json.keys().asSequence().filterNot { it.startsWith("_") }.associateWith { name ->
+            val years = json.getJSONArray(name)
+            (0 until years.length()).map { years.get(it).toString() }
+        }).also { Log.i(TAG, "Photo rules: ${json.length()} entries") }
+    } catch (e: java.io.FileNotFoundException) {
+        PhotoRules.NONE
+    } catch (e: Exception) {
+        Log.e(TAG, "Can't read $PHOTO_RULES", e)
+        null
+    }
+
     private val _faces = MutableStateFlow<Map<String, ImageBitmap>>(emptyMap())
     /** Faces of Google Photos people by their key, loaded as people are listed. */
     val faces: StateFlow<Map<String, ImageBitmap>> = _faces.asStateFlow()
@@ -532,7 +550,19 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         facts[person]?.let { if (!it.isCompleted || it.getCompleted().isNotEmpty()) return }
         facts[person] = viewModelScope.async {
             try {
-                val items = photos.photos(person, pages = 5).filter { !it.video }.shuffled().take(PHOTOS_TO_LOOK_AT)
+                val rules = photoRules ?: return@async emptyList<PhotoFacts>().also {
+                    Log.w(TAG, "Google Photos: the photo rules can't be read, so no photos")
+                }
+                // The rules go by the person's name in Google Photos; without it they can't be checked.
+                val name = _personNames.value[person]
+                    ?: runCatching { rememberNames(photos.people()) }.let { _personNames.value[person] }
+                if (name == null && !rules.isEmpty) {
+                    Log.w(TAG, "Google Photos: no name for $person, so no photos")
+                    return@async emptyList()
+                }
+                val items = photos.photos(person, pages = 5)
+                    .filter { !it.video && (name == null || rules.allows(name, it.year)) }
+                    .shuffled().take(PHOTOS_TO_LOOK_AT)
                 items.map { item ->
                     async { PhotoFacts(item.key, item.year, runCatching { photos.place(item.key) }.getOrNull()) }
                 }.awaitAll().also { Log.i(TAG, "Google Photos: ${it.size} photos for $person, ${it.count { f -> f.place != null }} with places") }
@@ -651,6 +681,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
 
     private companion object {
         const val FACE_PX = 160
+        const val PHOTO_RULES = "private/photo-rules.json"
         const val FACE_MAX_AGE_MS = 30L * 24 * 60 * 60 * 1000
         const val PHOTO_WIDTH = 1600
         const val PHOTO_HEIGHT = 900

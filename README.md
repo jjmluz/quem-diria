@@ -53,6 +53,11 @@ recognised (and the family named). The TV asks once whether Quem Diria? may see 
 by name next time. Photos TV does the talking to Google; this app only asks it for people, photos, places and
 pictures (`GooglePhotos.kt`). Photos are taken at random from each person's newest few hundred, for now.
 
+Photos can be kept out by person and year in `private/photo-rules.json`, which stays out of git and is bundled
+by the build when it's there: `{"<name in Google Photos>": [2012, "2014-2016"]}`, or `[]` for every photo of
+someone. A photo is kept out when it's one of that person's, taken in one of those years (others in it aside).
+If the file can't be read, no photos are used at all.
+
 ## Questions
 
 `app/src/main/assets/decks/family.txt` and `adults.txt`, English and Portuguese side by side on each line

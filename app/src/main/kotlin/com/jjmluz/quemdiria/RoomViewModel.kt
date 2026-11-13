@@ -15,7 +15,9 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -416,14 +418,34 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         prefs.edit().apply { people.forEach { putString("person_name:${it.key}", it.name) } }.apply()
     }
 
-    /** Fetches the faces of [keys] not loaded yet, a few at a time, so the first ones on screen show soon. */
-    private suspend fun loadFaces(keys: List<String>) {
+    /**
+     * Shows the faces of [keys] not on screen yet, a few at a time, so the first ones on screen show soon: each
+     * one kept on the TV if it's there (fetched again after [FACE_MAX_AGE_MS], in case it changed), otherwise from
+     * Photos TV, and then kept. With [fetch] false, only the kept ones: nothing is asked of Photos TV.
+     */
+    private suspend fun loadFaces(keys: List<String>, fetch: Boolean = true) {
         keys.filter { it !in _faces.value }.chunked(6).forEach { chunk ->
-            val loaded = chunk.map { key -> viewModelScope.async { photos.face(key, FACE_PX)?.let(::decode)?.let { key to it } } }
-                .mapNotNull { it.await() }
-            _faces.value = _faces.value + loaded
+            val loaded = chunk.map { key -> viewModelScope.async { face(key, fetch)?.let { key to it } } }.mapNotNull { it.await() }
+            if (loaded.isNotEmpty()) _faces.value = _faces.value + loaded
         }
     }
+
+    private suspend fun face(key: String, fetch: Boolean): ImageBitmap? {
+        val file = faceFile(key)
+        val kept = withContext(Dispatchers.IO) {
+            if (file.exists()) runCatching { file.readBytes() }.getOrNull() else null
+        }
+        val fresh = kept != null && System.currentTimeMillis() - file.lastModified() < FACE_MAX_AGE_MS
+        if (fresh || !fetch) return kept?.let(::decode)
+        // Not there, too old, or not to be had: the kept one (if any) still beats none.
+        val bytes = photos.face(key, FACE_PX) ?: return kept?.let(::decode)
+        val image = decode(bytes) ?: return kept?.let(::decode)
+        withContext(Dispatchers.IO) { runCatching { file.apply { parentFile?.mkdirs() }.writeBytes(bytes) } }
+        return image
+    }
+
+    private fun faceFile(key: String) =
+        java.io.File(getApplication<Application>().filesDir, "faces/${android.net.Uri.encode(key)}")
 
     /** The linking screen's keys: the d-pad moves, OK picks, Back goes back a level and then closes it. */
     private fun onLinkingKey(keyCode: Int, ok: Boolean, back: Boolean): Boolean {
@@ -488,9 +510,12 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         if (missing.isNotEmpty() && photos.allowed && !loadingLobbyFaces) {
             loadingLobbyFaces = true
             viewModelScope.launch {
-                // Photos TV opens only faces it has listed since it started.
-                runCatching { rememberNames(photos.people()) }
-                loadFaces(missing)
+                // Those kept on the TV straight away; Photos TV opens only faces it has listed since it started.
+                loadFaces(missing, fetch = false)
+                if (missing.any { it !in _faces.value }) {
+                    runCatching { rememberNames(photos.people()) }
+                    loadFaces(missing)
+                }
                 loadingLobbyFaces = false
             }
         }
@@ -626,6 +651,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
 
     private companion object {
         const val FACE_PX = 160
+        const val FACE_MAX_AGE_MS = 30L * 24 * 60 * 60 * 1000
         const val PHOTO_WIDTH = 1600
         const val PHOTO_HEIGHT = 900
         const val PHOTOS_TO_LOOK_AT = 12

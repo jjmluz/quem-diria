@@ -8,6 +8,9 @@ sealed interface Remark {
     /** [players] scored the most at the last reveal, [points] each. */
     data class Scored(val players: List<Int>, val points: Int) : Remark
 
+    /** Every player scored the most at the last reveal, [points] each: said as "all", not a list of every name. */
+    data class EveryoneScored(val points: Int) : Remark
+
     /** Nobody scored at the last reveal. */
     data object NobodyScored : Remark
 
@@ -35,7 +38,8 @@ sealed interface Remark {
         fun afterReveal(game: Game, players: List<Int>): Remark {
             val best = players.maxOfOrNull { game.gained[it] ?: 0 } ?: 0
             if (best <= 0) return NobodyScored
-            return Scored(players.filter { (game.gained[it] ?: 0) == best }, best)
+            val top = players.filter { (game.gained[it] ?: 0) == best }
+            return if (top.size > 1 && top.size == players.size) EveryoneScored(best) else Scored(top, best)
         }
 
         /** On the scoreboard: who among [players] is in first, and who's next. Null with fewer than two players. */

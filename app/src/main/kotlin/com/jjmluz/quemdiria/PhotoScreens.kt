@@ -57,7 +57,6 @@ fun LinkingOverlay(room: Room, linking: Linking, faces: Map<String, ImageBitmap>
     Column(Modifier.fillMaxSize().background(Background).padding(horizontal = 56.dp, vertical = 28.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.link_title), 30.sp, weight = FontWeight.Black, lines = 1, modifier = Modifier.weight(1f))
-            if (room.allLinked) Text(stringResource(R.string.photos_ready), 18.sp, Green, FontWeight.Bold, lines = 1)
         }
         Text(stringResource(R.string.link_hint), 16.sp, Muted, lines = 1)
         Spacer(Modifier.height(16.dp))

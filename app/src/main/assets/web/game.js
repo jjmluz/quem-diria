@@ -13,6 +13,7 @@ Object.assign(STRINGS.en, {
   beingDrawn: 'The others are drawing you… 😬', drawn: 'Sent! Waiting for the others.',
   draw: 'Draw:', send: 'Send', undo: 'Undo', sendFailed: 'That didn’t send. Try again.',
   pickDrawing: 'Pick the best drawing', yours: 'Yours',
+  othersPick: 'Just two drawings: {name} picks the best.',
   scores: 'Scores', finalIntro: 'Final round coming: points count double!',
   place: 'You came {rank}!', winner: 'You won! 🎉', draw2: 'A draw for first place! 🎉',
   awardTitle: 'The room thinks it’s you:', votes: '{n} votes', oneVote: '1 vote',
@@ -30,6 +31,7 @@ Object.assign(STRINGS.pt, {
   beingDrawn: 'Os outros estão a desenhar-te… 😬', drawn: 'Enviado! À espera dos outros.',
   draw: 'Desenha:', send: 'Enviar', undo: 'Desfazer', sendFailed: 'Não foi enviado. Tenta outra vez.',
   pickDrawing: 'Escolhe o melhor desenho', yours: 'O teu',
+  othersPick: 'Só dois desenhos: quem escolhe é {name}.',
   scores: 'Pontuação', finalIntro: 'Vem aí a ronda final: pontos a dobrar!',
   place: 'Ficaste em {rank} lugar!', winner: 'Ganhaste! 🎉', draw2: 'Empate no primeiro lugar! 🎉',
   awardTitle: 'A sala acha que és tu:', votes: '{n} votos', oneVote: '1 voto',
@@ -99,7 +101,8 @@ function renderGame(room) {
     el('span', { class: 'game-score' }, fill(g.score === 1 ? T.total1 : T.total, { n: g.score, rank: rankText(g.rank) })));
   const timer = el('div', { class: 'timer' }, el('div', { class: 'timer-bar', id: 'timer-bar' }));
   const body = el('div', { class: 'game-body' });
-  screen.replaceChildren(header, deadline ? timer : null, body);
+  // No timer on stages without a deadline (the end): replaceChildren would show a null as the text "null".
+  screen.replaceChildren(...[header, deadline ? timer : null, body].filter((n) => n));
   startTimer(g.remaining);
 
   const spotlight = playerById(room, g.spotlight);
@@ -339,8 +342,13 @@ class DrawingPad {
   }
 }
 
+function spotlightName(room, g) {
+  const p = playerById(room, g.spotlight);
+  return p ? p.name : '';
+}
+
 function renderPick(room, g, body) {
-  body.append(el('h2', { class: 'question small' }, g.question), el('p', { class: 'kicker' }, T.pickDrawing));
+  body.append(el('h2', { class: 'question small' }, g.question), el('p', { class: 'kicker' }, g.picks ? T.pickDrawing : fill(T.othersPick, { name: spotlightName(room, g) })));
   const grid = el('div', { class: 'gallery' });
   g.drawers.forEach((drawer, i) => {
     const own = drawer === room.you;
@@ -349,7 +357,8 @@ function renderPick(room, g, body) {
       type: 'button',
       class: 'drawing' + (g.picked === drawer ? ' chosen' : '') + (own ? ' own' : ''),
       onclick: () => {
-        if (own) return;
+        // Your own drawing can't be picked; with only one other drawing, there's no choice to make.
+        if (own || !g.picks) return;
         grid.querySelectorAll('.drawing').forEach((b) => b.classList.remove('chosen'));
         button.classList.add('chosen');
         act('/api/pick', new URLSearchParams({ drawer }));

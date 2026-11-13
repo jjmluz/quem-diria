@@ -120,8 +120,15 @@ data class Game(
 
     fun pick(player: Int, drawer: Int, present: Set<Int>): Game? {
         if (paused || stage != Stage.PICK || drawer == player || drawer !in drawings || player !in present) return null
+        if (!picksDrawing(player)) return null
         return copy(picks = picks + (player to drawer))
     }
+
+    /**
+     * Whether [player] picks the best drawing: only with at least two drawings that aren't theirs. With three players
+     * the two who drew could only pick each other's, so only the player in the spotlight picks.
+     */
+    fun picksDrawing(player: Int): Boolean = drawings.keys.count { it != player } >= 2
 
     /** Moves on if the stage's time is up or everyone [active] has answered; null if nothing changes. */
     fun tick(now: Long, active: Set<Int>, present: Set<Int>): Game? {
@@ -142,8 +149,7 @@ data class Game(
                 val drawers = waiting - setOfNotNull(spotlightId)
                 drawers.isNotEmpty() && drawers.all { it in drawings }
             }
-            // A drawer can't pick their own drawing; with only theirs left there's nothing for them to pick.
-            Stage.PICK -> waiting.isNotEmpty() && waiting.all { it in picks || drawings.keys.none { d -> d != it } }
+            Stage.PICK -> waiting.isNotEmpty() && waiting.all { it in picks || !picksDrawing(it) }
             else -> false
         }
     }

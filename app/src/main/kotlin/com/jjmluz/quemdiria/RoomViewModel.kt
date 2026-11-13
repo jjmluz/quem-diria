@@ -276,6 +276,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         fun points(n: Int) = res.getQuantityString(R.plurals.say_points, n, n)
         val array = when (remark) {
             is Remark.Scored -> if (remark.players.size == 1) R.array.say_scored_one else R.array.say_scored_many
+            is Remark.EveryoneScored -> R.array.say_everyone_scored
             Remark.NobodyScored -> R.array.say_nobody_scored
             is Remark.Leads -> if (remark.close) R.array.say_leads_close else R.array.say_leads
             is Remark.Tied -> R.array.say_tied
@@ -299,6 +300,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
             is Remark.Tied -> text = text.replace("{names}", names(remark.players)).replace("{points}", points(remark.points))
             is Remark.Won -> text = text.replace("{name}", names(remark.players)).replace("{names}", names(remark.players))
                 .replace("{points}", points(remark.points))
+            is Remark.EveryoneScored -> text = text.replace("{points}", points(remark.points))
             Remark.NobodyScored, Remark.NoScores -> {}
         }
         return text

@@ -18,6 +18,12 @@
         <item>{names} take the most points this time.</item>
         <item>That one goes to {names}!</item>
     </string-array>
+    <string-array name="say_everyone_scored">
+        <item>Everyone scored the most on that one!</item>
+        <item>Top points for all of you!</item>
+        <item>All tied on that one: {points} each.</item>
+        <item>Same points for everyone this time!</item>
+    </string-array>
     <string-array name="say_nobody_scored">
         <item>Nobody scored on that one!</item>
         <item>No points this time. Tricky one!</item>

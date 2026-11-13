@@ -45,7 +45,6 @@
     <string name="scan_to_return">Fechaste a página? Lê com a câmara para voltar ao jogo</string>
     <!-- Google Fotos, através da app Photos TV -->
     <string name="photos_button">Google Fotos: %1$d/%2$d</string>
-    <string name="photos_ready">Todos com ligação: há perguntas sobre fotos!</string>
     <string name="link_title">Ligar jogadores ao Google Fotos</string>
     <string name="link_hint">Quando todos tiverem ligação, o jogo junta perguntas sobre as fotos de cada um.</string>
     <string name="link_pick_player">Escolhe um jogador</string>

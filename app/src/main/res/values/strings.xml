@@ -51,7 +51,6 @@
     <string name="scan_to_return">Closed the page? Scan to get back into the game</string>
     <!-- Google Photos, through the Photos TV app -->
     <string name="photos_button">Google Photos: %1$d/%2$d</string>
-    <string name="photos_ready">Everyone is linked: photo questions are on!</string>
     <string name="link_title">Link players to Google Photos</string>
     <string name="link_hint">When everyone is linked, the game adds questions about their photos.</string>
     <string name="link_pick_player">Pick a player</string>

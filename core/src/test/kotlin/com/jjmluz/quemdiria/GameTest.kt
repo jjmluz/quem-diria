@@ -4,6 +4,7 @@ import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -184,6 +185,22 @@ class GameTest {
         assertEquals(3, g.gallery.size)
         assertEquals("Draw {name}", g.gallery.first().prompt)
         assertEquals(Stage.SCORES, g.skip(4, all)!!.stage)
+    }
+
+    @Test
+    fun withTwoDrawingsOnlyThoseWhoDidntDrawPick() {
+        val three = setOf(1, 2, 3)
+        var g = spotlightGame(present = three).skip(0, three)!!.skip(1, three)!!
+        g = g.draw(2, jpeg, three)!!.draw(3, jpeg, three)!!.tick(2, three, three)!!
+        assertEquals(Stage.PICK, g.stage)
+        // The two who drew could only pick each other's: they don't pick at all.
+        assertFalse(g.picksDrawing(2))
+        assertNull(g.pick(2, 3, three))
+        assertTrue(g.picksDrawing(1))
+        // Once the player in the spotlight picks, everyone has.
+        g = g.pick(1, 3, three)!!.tick(3, three, three)!!
+        assertEquals(Stage.PICK_REVEAL, g.stage)
+        assertEquals(mapOf(2 to 0, 3 to 2), g.gained)
     }
 
     @Test

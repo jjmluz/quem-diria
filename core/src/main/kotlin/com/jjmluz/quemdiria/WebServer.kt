@@ -433,6 +433,7 @@ class WebServer(
             if (game.stage == Stage.PHOTO_REVEAL) append(",\"truth\":").append((game.step as Step.Photo).question.truth)
             append(",\"drew\":").append(you in game.drawings)
             append(",\"picked\":").append(game.picks[you] ?: "null")
+            append(",\"picks\":").append(game.picksDrawing(you))
             append(",\"drawers\":[").append(game.galleryOrder.joinToString(",")).append(']')
             append(",\"gained\":").append(game.gained[you] ?: 0)
             val score = game.scores[you] ?: 0

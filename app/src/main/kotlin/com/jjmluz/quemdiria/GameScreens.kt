@@ -375,7 +375,7 @@ private fun GalleryScreen(room: Room, game: Game, reveal: Boolean) {
         if (reveal) {
             Gains(room, game)
         } else {
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Progress(room.players, game.picks.keys) }
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Progress(room.players.filter { game.picksDrawing(it.id) }, game.picks.keys) }
             Spacer(Modifier.height(16.dp))
             BottomHint(stringResource(R.string.vote_on_phones), stringResource(R.string.dont_wait))
         }

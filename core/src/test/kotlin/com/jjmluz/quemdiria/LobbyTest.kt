@@ -187,7 +187,7 @@ class LobbyTest {
         assertEquals(Stage.PICK, game.stage)
         for (id in robots) {
             val pick = game.picks[id]
-            if (game.drawings.keys.any { it != id }) assertTrue(pick != null && pick != id) else assertNull(pick)
+            if (game.picksDrawing(id)) assertTrue(pick != null && pick != id) else assertNull(pick)
         }
     }
 

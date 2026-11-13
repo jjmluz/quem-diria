@@ -64,7 +64,8 @@ class Bot:
             todo = lambda: self.act("/api/answer", f"option={random.randrange(4)}".encode())
         elif stage == "DRAW" and not me_spotlight and not game["drew"]:
             todo = lambda: self.act("/api/drawing", self.selfie, "image/jpeg")
-        elif stage == "PICK" and game["picked"] is None:
+        # With only one drawing that isn't theirs, a player has no choice and doesn't pick.
+        elif stage == "PICK" and game["picked"] is None and game.get("picks", True):
             choices = [d for d in game.get("drawers", []) if d != self.id]
             if not choices:
                 return

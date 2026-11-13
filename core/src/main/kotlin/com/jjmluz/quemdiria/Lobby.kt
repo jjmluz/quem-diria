@@ -257,7 +257,7 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS, private val robotRandom: 
                 Stage.DRAW -> if (id in game.drawings) null else game.draw(id, picture, present)
                 Stage.PICK -> {
                     val others = game.drawings.keys - id
-                    if (id in game.picks || others.isEmpty()) null else game.pick(id, others.random(robotRandom), present)
+                    if (id in game.picks || !game.picksDrawing(id)) null else game.pick(id, others.random(robotRandom), present)
                 }
                 else -> null
             } ?: game

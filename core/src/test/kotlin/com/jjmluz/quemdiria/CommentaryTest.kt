@@ -16,6 +16,9 @@ class CommentaryTest {
         assertEquals(Remark.Scored(listOf(2), 4), Remark.afterReveal(game(gained = mapOf(1 to 2, 2 to 4)), players))
         assertEquals(Remark.Scored(listOf(1, 3), 2), Remark.afterReveal(game(gained = mapOf(1 to 2, 3 to 2, 4 to 0)), players))
         assertEquals(Remark.NobodyScored, Remark.afterReveal(game(gained = mapOf(1 to 0)), players))
+        // Everyone on top is "all", not a list of every name; a lone player is still named.
+        assertEquals(Remark.EveryoneScored(2), Remark.afterReveal(game(gained = players.associateWith { 2 }), players))
+        assertEquals(Remark.Scored(listOf(1), 3), Remark.afterReveal(game(gained = mapOf(1 to 3)), listOf(1)))
     }
 
     @Test

@@ -14,6 +14,12 @@
         <item>{names} levam mais pontos desta vez.</item>
         <item>Esta vai para {names}!</item>
     </string-array>
+    <string-array name="say_everyone_scored">
+        <item>Todos no topo nessa!</item>
+        <item>Pontuação máxima para todos!</item>
+        <item>Empate geral nessa: {points} para cada.</item>
+        <item>Os mesmos pontos para todos desta vez!</item>
+    </string-array>
     <string-array name="say_nobody_scored">
         <item>Ninguém pontuou nesta!</item>
         <item>Zero pontos desta vez. Esta era difícil!</item>

@@ -25,7 +25,8 @@ open its page.
 - **Spotlight**: up to four times a game, one player answers a question about themselves (4 choices) and the
   others guess. A right guess is worth 2; the spotlight player gets 1 for each right guess.
 - **Drawing**: then everyone else draws on the spotlight player's selfie ("{name} as a pirate"), and all vote
-  for the best drawing: 2 points per vote.
+  for the best drawing: 2 points per vote. With only two drawings (three players), the two who drew would only
+  have each other's to pick, so only the spotlight player votes.
 - **Photos** (when every player is linked to Google Photos): after each spotlight turn, two questions about one
   of that player's photos, shown on the TV: "Where was this photo taken?" or "In what year?". Everyone guesses,
   the player in the photo too, and the photo's own place or date is right: 2 points.

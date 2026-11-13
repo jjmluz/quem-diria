@@ -4,9 +4,9 @@ plugins {
 }
 
 /**
- * Copies the music into the app's assets, when it's there: the room's (`raquel.ogg` at the project root) as
- * `music/title.ogg`, and the game's (`background_*.m4a`) under their own names in `music/`. The tracks aren't
- * ours to share, so they're kept out of git; without them the app is quiet.
+ * Copies the music (the `music` folder at the project root: `lobby.*` for the room, `background_*` for the game)
+ * into the app's assets as `music/`, when it's there. The tracks aren't ours to share, so the folder is kept out
+ * of git; without it the app is quiet.
  */
 abstract class CopyMusic : DefaultTask() {
     @get:InputFiles
@@ -19,17 +19,12 @@ abstract class CopyMusic : DefaultTask() {
     fun copy() {
         val out = outputDir.get().asFile
         out.deleteRecursively()
-        music.files.filter { it.isFile }.forEach {
-            val name = if (it.name == "raquel.ogg") "title.ogg" else it.name
-            it.copyTo(out.resolve("music/$name"), overwrite = true)
-        }
+        music.files.filter { it.isFile }.forEach { it.copyTo(out.resolve("music/${it.name}"), overwrite = true) }
     }
 }
 
 val copyMusic = tasks.register<CopyMusic>("copyMusic") {
-    music.from(rootProject.file("raquel.ogg"), rootProject.fileTree(rootProject.projectDir) {
-        include("background_*.m4a")
-    })
+    music.from(rootProject.fileTree("music") { include("lobby.*", "background_*") })
 }
 
 androidComponents {

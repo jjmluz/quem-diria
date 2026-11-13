@@ -8,8 +8,7 @@ local.properties
 bin/
 
 # Music: the family's own tracks, not ours to share. The build bundles them when they're there.
-/raquel.ogg
-/background_*.m4a
+/music/
 # A picture the splash screen was drawn after: a reference, not ours to share.
 /dusk.png
 

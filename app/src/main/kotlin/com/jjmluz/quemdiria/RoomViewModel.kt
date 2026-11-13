@@ -129,7 +129,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     /** The activity should ask for [GooglePhotos.PERMISSION]; it answers with [onPermission]. */
     val askPermission: StateFlow<Boolean> = _askPermission.asStateFlow()
 
-    private val music = Music(app, viewModelScope, Music.TITLE, volume = 0.6f)
+    private val music = Music(app, viewModelScope, Music.LOBBY, volume = 0.6f)
     /** The game's music, under the narrator and the game's sounds: quieter than the room's. */
     private val gameMusic = Music(app, viewModelScope, Music.GAME, volume = 0.35f)
     private val narrator = Narrator(app, language) { speaking -> gameMusic.duck(speaking) }
@@ -255,9 +255,15 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
      */
     private fun updateMusic() {
         val shown = foreground && !_splash.value
-        music.play(shown && room.value.phase == Phase.LOBBY)
-        gameMusic.play(shown && room.value.phase == Phase.GAME)
+        val phase = room.value.phase
+        // Each game starts on a random track; coming back to the TV mid-game carries on where it was.
+        if (phase == Phase.GAME && musicPhase == Phase.LOBBY) gameMusic.shuffle()
+        musicPhase = phase
+        music.play(shown && phase == Phase.LOBBY)
+        gameMusic.play(shown && phase == Phase.GAME)
     }
+
+    private var musicPhase = Phase.LOBBY
 
     /** What the remote's keys do. Returns true for a key it used. */
     fun onKeyDown(keyCode: Int): Boolean {

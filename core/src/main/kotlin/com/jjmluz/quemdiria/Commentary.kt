@@ -1,8 +1,8 @@
 package com.jjmluz.quemdiria
 
 /**
- * What the narrator remarks on: after each question who scored the most, and on the scoreboard who's in first
- * and who's next. The TV turns each into one of several wordings, so it doesn't sound the same every time.
+ * What the narrator remarks on: after each question who scored the most, on the scoreboard who's in first
+ * and who's next, and at the end who won. The TV turns each into one of several wordings, so it doesn't sound the same every time.
  */
 sealed interface Remark {
     /** [players] scored the most at the last reveal, [points] each. */
@@ -25,6 +25,9 @@ sealed interface Remark {
     /** Nobody has any points yet. */
     data object NoScores : Remark
 
+    /** At the end: [players] won (more than one on a draw), with [points]. */
+    data class Won(val players: List<Int>, val points: Int) : Remark
+
     companion object {
         const val CLOSE_GAP = 2
 
@@ -46,6 +49,12 @@ sealed interface Remark {
             val rest = players - first.toSet()
             val second = rest.maxOf(::score)
             return Leads(first.single(), top, rest.filter { score(it) == second }, second)
+        }
+
+        /** At the end: who among [players] won. Null with nobody left. */
+        fun winner(game: Game, players: List<Int>): Remark? {
+            val won = game.winners(players).ifEmpty { return null }
+            return Won(won, game.scores[won.first()] ?: 0)
         }
     }
 }

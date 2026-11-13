@@ -40,4 +40,12 @@ class CommentaryTest {
         assertEquals(Remark.NoScores, Remark.standings(game(), players))
         assertNull(Remark.standings(game(scores = mapOf(1 to 5)), listOf(1)))
     }
+
+    @Test
+    fun theWinnerOrWinnersAtTheEnd() {
+        assertEquals(Remark.Won(listOf(2), 9), Remark.winner(game(scores = mapOf(1 to 3, 2 to 9)), players))
+        assertEquals(Remark.Won(listOf(1, 4), 5), Remark.winner(game(scores = mapOf(1 to 5, 4 to 5)), players))
+        assertEquals(Remark.Won(players, 0), Remark.winner(game(), players))
+        assertNull(Remark.winner(game(), emptyList()))
+    }
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    What the narrator says after each question and on the scoreboard (Remark in core). One wording is picked at
-    random each time, never the same one twice in a row. {name} is one player, {names} several ("Ana and Rui"),
+    What the narrator says after each question, on the scoreboard and at the end (Remark in core). One wording
+    is picked at random each time, not one of the last two used. {name} is one player, {names} several ("Ana and Rui"),
     {second} whoever is next; {points}, {second_points} and {gap} come out as "3 points".
 -->
 <resources>
@@ -43,6 +43,20 @@
     <string-array name="say_no_scores">
         <item>Nobody has scored yet. Plenty of time!</item>
         <item>No points on the board yet.</item>
+    </string-array>
+    <string-array name="say_won_one">
+        <item>And the winner is… {name}, with {points}! Congratulations!</item>
+        <item>{name} wins the game, with {points}. Well played!</item>
+        <item>Game over! {name} takes it, with {points}.</item>
+        <item>All hail {name}, our winner, with {points}!</item>
+    </string-array>
+    <string-array name="say_won_many">
+        <item>It\'s a draw! {names} win together, with {points} each.</item>
+        <item>We have more than one winner: {names}, on {points}!</item>
+        <item>Game over, and nobody could split {names}: {points} each. Congratulations!</item>
+    </string-array>
+    <string-array name="say_won_nobody">
+        <item>Game over! Nobody scored, so everyone wins. Or nobody does.</item>
     </string-array>
     <string name="say_and">and</string>
     <plurals name="say_points">

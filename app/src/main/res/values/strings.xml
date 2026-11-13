@@ -64,7 +64,7 @@
     <string name="link_no_people">Google Photos has no named people yet. Name them in the People tab there.</string>
     <string name="link_done">Done</string>
     <string name="link_choose">Link</string>
-    <string name="getting_photos">Getting the photos…</string>
+    <string name="getting_photos">Starting…</string>
     <string name="photo_title">A photo of %s</string>
     <string name="photo_rules">Everyone guesses, %s too!</string>
     <string name="photo_year_question">In what year was this photo of {name} taken?</string>

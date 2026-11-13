@@ -255,7 +255,10 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
                 if (say) Remark.standings(game, room.players.map { it.id })?.let { narrator.say(words(room, it)) }
             }
             Stage.FINAL_INTRO -> sounds.play(Sounds.Kind.REVEAL)
-            Stage.END -> sounds.play(Sounds.Kind.FANFARE)
+            Stage.END -> {
+                sounds.play(Sounds.Kind.FANFARE)
+                if (say) Remark.winner(game, room.players.map { it.id })?.let { narrator.say(words(room, it)) }
+            }
         }
     }
 
@@ -277,6 +280,11 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
             is Remark.Leads -> if (remark.close) R.array.say_leads_close else R.array.say_leads
             is Remark.Tied -> R.array.say_tied
             Remark.NoScores -> R.array.say_no_scores
+            is Remark.Won -> when {
+                remark.points == 0 -> R.array.say_won_nobody
+                remark.players.size == 1 -> R.array.say_won_one
+                else -> R.array.say_won_many
+            }
         }
         val wordings = res.getStringArray(array)
         val avoid = recentWordings[array].orEmpty().takeLast(if (wordings.size >= 4) 2 else 1)
@@ -289,6 +297,8 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
                 .replace("{second_points}", points(remark.nextPoints)).replace("{second}", names(remark.next))
                 .replace("{gap}", points(remark.gap))
             is Remark.Tied -> text = text.replace("{names}", names(remark.players)).replace("{points}", points(remark.points))
+            is Remark.Won -> text = text.replace("{name}", names(remark.players)).replace("{names}", names(remark.players))
+                .replace("{points}", points(remark.points))
             Remark.NobodyScored, Remark.NoScores -> {}
         }
         return text

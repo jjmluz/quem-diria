@@ -40,6 +40,20 @@
         <item>Ainda ninguém pontuou. Há muito tempo!</item>
         <item>Ainda não há pontos no quadro.</item>
     </string-array>
+    <string-array name="say_won_one">
+        <item>E quem ganha é… {name}, com {points}! Parabéns!</item>
+        <item>{name} ganha o jogo, com {points}. Muito bem jogado!</item>
+        <item>Fim do jogo! A vitória é de {name}, com {points}.</item>
+        <item>Uma salva de palmas para {name}, com {points}!</item>
+    </string-array>
+    <string-array name="say_won_many">
+        <item>Empate! {names} ganham, com {points} cada.</item>
+        <item>Temos mais do que uma vitória: {names}, com {points}!</item>
+        <item>Fim do jogo, e ninguém separa {names}: {points} cada. Parabéns!</item>
+    </string-array>
+    <string-array name="say_won_nobody">
+        <item>Fim do jogo! Ninguém pontuou, por isso ganham todos. Ou ninguém.</item>
+    </string-array>
     <string name="say_and">e</string>
     <plurals name="say_points">
         <item quantity="one">%d ponto</item>

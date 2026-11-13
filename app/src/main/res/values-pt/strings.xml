@@ -58,7 +58,7 @@
     <string name="link_no_people">O Google Fotos ainda não tem pessoas com nome. Dá-lhes nome no separador Pessoas.</string>
     <string name="link_done">Concluído</string>
     <string name="link_choose">Ligar</string>
-    <string name="getting_photos">A buscar as fotos…</string>
+    <string name="getting_photos">A iniciar…</string>
     <string name="photo_title">Uma foto de %s</string>
     <string name="photo_rules">Todos adivinham, %s também!</string>
     <string name="photo_year_question">Em que ano foi tirada esta foto de {name}?</string>

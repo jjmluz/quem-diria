@@ -241,10 +241,52 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
                 if (say && step is Step.Spotlight) narrator.say(step.prompt.text.withName(name))
             }
             Stage.PICK -> sounds.play(Sounds.Kind.START)
-            Stage.VOTE_REVEAL, Stage.ANSWER_REVEAL, Stage.PICK_REVEAL, Stage.PHOTO_REVEAL -> sounds.play(Sounds.Kind.REVEAL)
-            Stage.FINAL_INTRO, Stage.SCORES -> sounds.play(Sounds.Kind.REVEAL)
+            Stage.VOTE_REVEAL, Stage.ANSWER_REVEAL, Stage.PICK_REVEAL, Stage.PHOTO_REVEAL -> {
+                sounds.play(Sounds.Kind.REVEAL)
+                if (say) narrator.say(words(room, Remark.afterReveal(game, room.players.map { it.id })))
+            }
+            Stage.SCORES -> {
+                sounds.play(Sounds.Kind.REVEAL)
+                if (say) Remark.standings(game, room.players.map { it.id })?.let { narrator.say(words(room, it)) }
+            }
+            Stage.FINAL_INTRO -> sounds.play(Sounds.Kind.REVEAL)
             Stage.END -> sounds.play(Sounds.Kind.FANFARE)
         }
+    }
+
+    /** The wordings each kind of remark used lately, newest last, so the next one is different. */
+    private val recentWordings = mutableMapOf<Int, List<Int>>()
+
+    /** [remark] in words: one of its wordings at random, not one of the last two it had (one, with few). */
+    private fun words(room: Room, remark: Remark): String {
+        val res = getApplication<Application>().resources
+        fun name(id: Int) = room.player(id)?.name.orEmpty()
+        fun names(ids: List<Int>): String {
+            val all = ids.map(::name)
+            return if (all.size == 1) all[0] else all.dropLast(1).joinToString(", ") + " " + res.getString(R.string.say_and) + " " + all.last()
+        }
+        fun points(n: Int) = res.getQuantityString(R.plurals.say_points, n, n)
+        val array = when (remark) {
+            is Remark.Scored -> if (remark.players.size == 1) R.array.say_scored_one else R.array.say_scored_many
+            Remark.NobodyScored -> R.array.say_nobody_scored
+            is Remark.Leads -> if (remark.close) R.array.say_leads_close else R.array.say_leads
+            is Remark.Tied -> R.array.say_tied
+            Remark.NoScores -> R.array.say_no_scores
+        }
+        val wordings = res.getStringArray(array)
+        val avoid = recentWordings[array].orEmpty().takeLast(if (wordings.size >= 4) 2 else 1)
+        val pick = wordings.indices.filter { it !in avoid }.ifEmpty { wordings.indices.toList() }.random()
+        recentWordings[array] = (recentWordings[array].orEmpty() + pick).takeLast(2)
+        var text = wordings[pick]
+        when (remark) {
+            is Remark.Scored -> text = text.replace("{name}", names(remark.players)).replace("{names}", names(remark.players))
+            is Remark.Leads -> text = text.replace("{name}", name(remark.leader)).replace("{points}", points(remark.points))
+                .replace("{second_points}", points(remark.nextPoints)).replace("{second}", names(remark.next))
+                .replace("{gap}", points(remark.gap))
+            is Remark.Tied -> text = text.replace("{names}", names(remark.players)).replace("{points}", points(remark.points))
+            Remark.NobodyScored, Remark.NoScores -> {}
+        }
+        return text
     }
 
     /** The activity is on screen (true) or not: the music plays only while it is. */

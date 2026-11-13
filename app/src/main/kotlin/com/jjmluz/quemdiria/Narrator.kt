@@ -58,6 +58,7 @@ class Narrator(
     }
 
     fun say(text: String) {
+        Log.i("QuemDiria", "Narrator: $text")
         if (!ready) return
         // Checked on every line, since the TV's connection can come and go during a game.
         val voice = (if (hasInternet()) online else null) ?: offline

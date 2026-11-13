@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- O que o narrador diz depois de cada pergunta e no quadro de pontos: ver values/commentary.xml. -->
+<resources>
+    <string-array name="say_scored_one">
+        <item>Quem pontuou mais nesta foi {name}!</item>
+        <item>Boa, {name}: o máximo de pontos nesta pergunta.</item>
+        <item>{name} leva mais pontos desta vez.</item>
+        <item>Esta vai para {name}!</item>
+        <item>Muitos pontos para {name}!</item>
+    </string-array>
+    <string-array name="say_scored_many">
+        <item>Quem pontuou mais nesta: {names}!</item>
+        <item>O máximo de pontos vai para {names}.</item>
+        <item>{names} levam mais pontos desta vez.</item>
+        <item>Esta vai para {names}!</item>
+    </string-array>
+    <string-array name="say_nobody_scored">
+        <item>Ninguém pontuou nesta!</item>
+        <item>Zero pontos desta vez. Esta era difícil!</item>
+        <item>Nem um ponto nesta.</item>
+    </string-array>
+    <string-array name="say_leads">
+        <item>Em primeiro lugar: {name}, com {points}, à frente de {second}.</item>
+        <item>{name} lidera com {points}. A seguir: {second}, com {second_points}.</item>
+        <item>No topo: {name}, com {points}. Logo atrás: {second}.</item>
+        <item>{name} vai à frente, com {gap} de vantagem sobre {second}.</item>
+    </string-array>
+    <string-array name="say_leads_close">
+        <item>Está renhido! {name} lidera com {points}, apenas {gap} à frente de {second}.</item>
+        <item>Lado a lado: {name} com {points}, {second} com {second_points}.</item>
+        <item>Em primeiro está {name}, mas por pouco, à frente de {second}.</item>
+        <item>Muito equilibrado no topo: {name} com {gap} de vantagem sobre {second}.</item>
+    </string-array>
+    <string-array name="say_tied">
+        <item>{names} partilham o primeiro lugar, com {points} cada.</item>
+        <item>Empate no topo! {names}, com {points}.</item>
+        <item>Ninguém separa {names}: {points} cada.</item>
+    </string-array>
+    <string-array name="say_no_scores">
+        <item>Ainda ninguém pontuou. Há muito tempo!</item>
+        <item>Ainda não há pontos no quadro.</item>
+    </string-array>
+    <string name="say_and">e</string>
+    <plurals name="say_points">
+        <item quantity="one">%d ponto</item>
+        <item quantity="other">%d pontos</item>
+    </plurals>
+</resources>

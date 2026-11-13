@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    What the narrator says after each question and on the scoreboard (Remark in core). One wording is picked at
+    random each time, never the same one twice in a row. {name} is one player, {names} several ("Ana and Rui"),
+    {second} whoever is next; {points}, {second_points} and {gap} come out as "3 points".
+-->
+<resources>
+    <string-array name="say_scored_one">
+        <item>{name} scored the most on that one!</item>
+        <item>Nicely done, {name}: top points for that question.</item>
+        <item>{name} takes the most points this time.</item>
+        <item>That one goes to {name}!</item>
+        <item>Big points for {name}!</item>
+    </string-array>
+    <string-array name="say_scored_many">
+        <item>{names} scored the most on that one!</item>
+        <item>Top points shared by {names}.</item>
+        <item>{names} take the most points this time.</item>
+        <item>That one goes to {names}!</item>
+    </string-array>
+    <string-array name="say_nobody_scored">
+        <item>Nobody scored on that one!</item>
+        <item>No points this time. Tricky one!</item>
+        <item>Not a single point there.</item>
+    </string-array>
+    <string-array name="say_leads">
+        <item>{name} is in first with {points}, ahead of {second}.</item>
+        <item>{name} leads with {points}. Next: {second}, with {second_points}.</item>
+        <item>At the top: {name}, with {points}. Behind: {second}.</item>
+        <item>{name} is out in front, {gap} clear of {second}.</item>
+    </string-array>
+    <string-array name="say_leads_close">
+        <item>It\'s close! {name} leads with {points}, just {gap} ahead of {second}.</item>
+        <item>Neck and neck: {name} on {points}, {second} on {second_points}.</item>
+        <item>{name} is in first, but only just, ahead of {second}.</item>
+        <item>Tight at the top: {name} by {gap} over {second}.</item>
+    </string-array>
+    <string-array name="say_tied">
+        <item>{names} share first place, with {points} each.</item>
+        <item>A tie at the top! {names}, on {points}.</item>
+        <item>Nobody can separate {names}: {points} each.</item>
+    </string-array>
+    <string-array name="say_no_scores">
+        <item>Nobody has scored yet. Plenty of time!</item>
+        <item>No points on the board yet.</item>
+    </string-array>
+    <string name="say_and">and</string>
+    <plurals name="say_points">
+        <item quantity="one">%d point</item>
+        <item quantity="other">%d points</item>
+    </plurals>
+</resources>

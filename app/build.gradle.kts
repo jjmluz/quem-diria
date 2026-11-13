@@ -5,7 +5,7 @@ plugins {
 
 /**
  * Copies the family's own files, kept out of git, into the app's assets under [folder] when they're there:
- * the music (`music/`: `lobby.*` for the room, `background_*` for the game) and the photo rules
+ * the music (`music/`: `lobby.*` for the room, `background_*` for the game, `winner.*` for its end) and the photo rules
  * (`private/photo-rules.json`: photos kept out of the game). Without them the app is quiet, with every photo allowed.
  */
 abstract class CopyIntoAssets : DefaultTask() {
@@ -27,7 +27,7 @@ abstract class CopyIntoAssets : DefaultTask() {
 }
 
 val copyMusic = tasks.register<CopyIntoAssets>("copyMusic") {
-    files.from(rootProject.fileTree("music") { include("lobby.*", "background_*") })
+    files.from(rootProject.fileTree("music") { include("lobby.*", "background_*", "winner.*") })
     folder.set("music")
 }
 

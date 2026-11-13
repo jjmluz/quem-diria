@@ -11,8 +11,8 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 
 /**
- * Music from the app's assets, faded in and out: the room's ([LOBBY], one track looping) and the game's
- * ([GAME], its tracks one after another in a shuffled order). Tracks are only there when the build found them to
+ * Music from the app's assets, faded in and out: the room's ([LOBBY], one track looping), the game's
+ * ([GAME], its tracks one after another in a shuffled order) and the winner's ([WINNER], looping on the end screen). Tracks are only there when the build found them to
  * bundle (the `music` folder; see `copyMusic` in app/build.gradle.kts): the family's tracks aren't ours to share,
  * so they stay out of git, and a build without them is simply quiet.
  *
@@ -72,9 +72,19 @@ class Music(context: Context, private val scope: CoroutineScope, prefix: String,
         apply()
     }
 
-    /** A new shuffled order, from the start of a random track: for each new game. Only while faded out. */
+    /**
+     * Back to the start, of a random track when there are several (in a new shuffled order): for each new game,
+     * or each time the winner is shown. Only while faded out.
+     */
     fun shuffle() {
-        if (on || tracks.size < 2) return
+        if (on) return
+        if (tracks.size < 2) {
+            fade?.cancel()
+            level = 0f
+            apply()
+            player?.seekTo(0)
+            return
+        }
         fade?.cancel()
         level = 0f
         order = tracks.shuffled()
@@ -86,6 +96,7 @@ class Music(context: Context, private val scope: CoroutineScope, prefix: String,
     fun play(on: Boolean) {
         if (player == null || on == this.on) return
         this.on = on
+        Log.i("QuemDiria", "Music: ${if (on) "in" else "out"}, ${order.getOrNull(index)}")
         fade?.cancel()
         fade = scope.launch {
             if (on && player?.isPlaying == false) player?.start()
@@ -133,9 +144,10 @@ class Music(context: Context, private val scope: CoroutineScope, prefix: String,
     }
 
     companion object {
-        /** The room's track (`music/lobby.*`) and the game's (`music/background_*`). */
+        /** The room's track (`music/lobby.*`), the game's (`music/background_*`) and the winner's (`music/winner.*`). */
         const val LOBBY = "lobby."
         const val GAME = "background_"
+        const val WINNER = "winner."
         private const val FADE_MS = 1_200L
         private const val STEPS = 24
         /** Ducking is quicker, so the first words aren't lost under the music. */

@@ -152,7 +152,12 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     private val music = Music(app, viewModelScope, Music.LOBBY, volume = 0.6f)
     /** The game's music, under the narrator and the game's sounds: quieter than the room's. */
     private val gameMusic = Music(app, viewModelScope, Music.GAME, volume = 0.35f)
-    private val narrator = Narrator(app, language) { speaking -> gameMusic.duck(speaking) }
+    /** The winner's song, looping on the end screen until the room. */
+    private val winnerMusic = Music(app, viewModelScope, Music.WINNER, volume = 0.6f)
+    private val narrator = Narrator(app, language) { speaking ->
+        gameMusic.duck(speaking)
+        winnerMusic.duck(speaking)
+    }
     private val sounds = Sounds()
 
     private val _splash = MutableStateFlow(true)
@@ -318,14 +323,20 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     private fun updateMusic() {
         val shown = foreground && !_splash.value
         val phase = room.value.phase
-        // Each game starts on a random track; coming back to the TV mid-game carries on where it was.
+        val end = room.value.game?.stage == Stage.END
+        // Each game starts on a random track, and the winner's song from its start; coming back to the TV
+        // mid-game carries on where it was.
         if (phase == Phase.GAME && musicPhase == Phase.LOBBY) gameMusic.shuffle()
+        if (end && !musicEnd) winnerMusic.shuffle()
         musicPhase = phase
+        musicEnd = end
         music.play(shown && phase == Phase.LOBBY)
-        gameMusic.play(shown && phase == Phase.GAME)
+        gameMusic.play(shown && phase == Phase.GAME && !end)
+        winnerMusic.play(shown && phase == Phase.GAME && end)
     }
 
     private var musicPhase = Phase.LOBBY
+    private var musicEnd = false
 
     /** What the remote's keys do. Returns true for a key it used. */
     fun onKeyDown(keyCode: Int): Boolean {
@@ -719,6 +730,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         sounds.release()
         music.release()
         gameMusic.release()
+        winnerMusic.release()
     }
 
     private companion object {

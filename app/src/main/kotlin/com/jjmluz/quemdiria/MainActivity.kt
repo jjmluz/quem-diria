@@ -1,5 +1,6 @@
 package com.jjmluz.quemdiria
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.WindowManager
@@ -44,6 +45,9 @@ class MainActivity : ComponentActivity() {
 
     // Keys go straight to the view model: nothing on screen is focusable. A used key's release is
     // swallowed too, so Back that took us to the lobby doesn't also close the app.
+    // Lint wrongly flags this override as restricted: androidx marks its own override of this public
+    // Activity method as library-internal.
+    @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         val keyCode = event.keyCode
         when (event.action) {

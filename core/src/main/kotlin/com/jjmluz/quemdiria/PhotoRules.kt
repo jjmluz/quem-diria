@@ -22,7 +22,7 @@ class PhotoRules private constructor(private val years: Map<String, Set<Int>?>) 
 
         /**
          * Rules from each person's name to their left-out years: `"2012"`, a range `"2012-2015"`, or no years at
-         * all for every photo of them. Names match whatever the case and accents ("joao" is "João").
+         * all for every photo of them. Names match whatever the case and accents ("renee" is "Renée").
          * @throws IllegalArgumentException naming the year that isn't one.
          */
         fun of(entries: Map<String, List<String>>): PhotoRules = PhotoRules(

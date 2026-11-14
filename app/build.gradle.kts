@@ -51,8 +51,21 @@ android {
         applicationId = "com.jjmluz.quemdiria"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        // CI passes these for releases (-PversionCode=… -PversionName=…); local builds use the defaults.
+        versionCode = providers.gradleProperty("versionCode").map(String::toInt).getOrElse(1)
+        versionName = providers.gradleProperty("versionName").getOrElse("0.1.0")
+    }
+
+    // CI signs releases with the keystore in the SIGNING_* secrets. Without them (local builds),
+    // release falls back to the debug key, which is fine for sideloading but can't update a copy from GitHub.
+    val releaseKeystore = providers.environmentVariable("SIGNING_KEYSTORE").orNull
+    signingConfigs {
+        if (releaseKeystore != null) create("release") {
+            storeFile = file(releaseKeystore)
+            storePassword = providers.environmentVariable("SIGNING_STORE_PASSWORD").get()
+            keyAlias = providers.environmentVariable("SIGNING_KEY_ALIAS").get()
+            keyPassword = providers.environmentVariable("SIGNING_KEY_PASSWORD").get()
+        }
     }
 
     buildTypes {
@@ -60,8 +73,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // Sideloaded personal build: sign with the debug key so `installRelease` just works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 

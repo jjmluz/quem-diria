@@ -1,5 +1,7 @@
 # Quem Diria?
 
+**Who'd have thought?**
+
 A party game for the family TV (Google TV), played with phones. Everyone joins from their phone's browser
 by scanning a QR code on the TV, takes a selfie, and then votes in secret on questions about each other:
 "who's most likely to...?". You score for agreeing with the rest of the room.
@@ -46,9 +48,10 @@ open its page.
 During a game, OK skips the wait ("Don't wait") and Back pauses, offering to leave. Language follows the TV,
 phones included, so the whole room plays in one: Portuguese from Portugal, otherwise English.
 
-## Google Photos
+## Google Photos (optional)
 
-With [Photos TV](https://github.com/jjmluz/photos-tv) installed and signed in on the same TV, the lobby has a
+The game plays without it; the photo rounds are only added when it's set up. With
+[Photos TV](https://github.com/jjmluz/photos-tv) installed and signed in on the same TV, the lobby has a
 **Google Photos** button: pick each player with the remote and who they are among the people Google Photos
 recognised (and the family named). The TV asks once whether Quem Diria? may see them. Players are linked again
 by name next time. Photos TV does the talking to Google; this app only asks it for people, photos, places and
@@ -64,10 +67,32 @@ If the file can't be read, no photos are used at all.
 `app/src/main/assets/decks/family.txt` and `adults.txt`, English and Portuguese side by side on each line
 (format at the top of each file and in `Deck.parse`). The adults deck mixes cheeky (dating, drinking, money,
 embarrassing stories) and spicy (frank about sex and relationships, with swearing, nothing graphic). Adults
-mode plays mostly family questions, with about 30% from the adults deck spread through the game. The TV
+mode plays mostly family questions, with about 30% from the adults deck spread through the game.
+**The adults deck is for adults only**: it has swearing and frank questions about sex and relationships. It's
+only played when **Mode: adults** is picked in the lobby (family is the default). The TV
 remembers which questions it has played and prefers new ones until it has been through them all.
 
-## Build and install
+## Install
+
+Quem Diria? isn't on the Play Store. Download the APK from the
+[latest release](https://github.com/jjmluz/quem-diria/releases/latest) and sideload it onto any Android TV or
+Google TV device running Android 8 or later. Newer releases install over older ones and keep your settings.
+
+There are two common ways to sideload:
+
+- **From the TV:** install a file manager or downloader app on the TV, open the APK with it, and allow it to
+  install unknown apps when asked.
+- **From a computer with `adb`:** turn on
+  [developer options and USB or network debugging](https://developer.android.com/studio/debug/dev-options) on
+  the TV, install the [Android SDK platform tools](https://developer.android.com/tools/releases/platform-tools),
+  and run:
+
+  ```bash
+  adb connect <tv-ip>:5555
+  adb install -r quem-diria-<version>.apk
+  ```
+
+### Build it yourself
 
 Needs Android Studio's JDK (21) and the Android SDK; `local.properties` holds the SDK path.
 
@@ -76,4 +101,18 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ANDROID_SERIAL=<tv-ip>:5555 ./gradlew testDebugUnitTest installRelease
 ```
 
-The release build is signed with the debug key, so it installs directly.
+Install the release build, not the debug build. A release build you make yourself is signed with your own debug
+key, so it can't update a copy installed from GitHub (or the other way round). Uninstall one before installing
+the other.
+
+**Your own music:** the build bundles whatever it finds in a `music/` folder at the project root (kept out of
+git): `lobby.*` loops in the room, `background_*` play shuffled during the game, and `winner.*` loops on the
+final screen (`.ogg` or `.m4a`). Without them, the game only has its sound effects.
+
+GitHub Actions lints, tests and builds on every push and pull request. Pushing a tag like `v1.2.0` builds the
+APK with that version, signed with the release key from the repository's secrets, and publishes it on the
+[Releases](https://github.com/jjmluz/quem-diria/releases) page.
+
+## License
+
+Quem Diria? is released under the [MIT License](LICENSE).

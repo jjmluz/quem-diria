@@ -3,13 +3,19 @@
 
 Usage: python3 tools/test_players/bots.py <tv host:port> [number of bots, default 2]
 Names: Robô Rui, Robô Eva and so on, or your own: BOT_NAMES="Sara Margarida,Pedro Henrique" python3 ...
+Selfies: bot1.jpg and bot2.jpg, or the JPEGs in a folder of yours, in name order: BOT_SELFIES=<folder>.
 Stop with Ctrl-C: their phones "go away" and they grey out on the TV.
-Each bot acts 2-8 seconds into each stage, at random. Their drawings are their own selfie.
+Each bot acts 2-8 seconds into each stage, at random. They draw on the spotlight player's selfie with
+doodle.swift (glasses, a crown, cat ears...), or, without Swift, hand in their own selfie.
 """
+import glob
 import json
 import os
 import random
+import shutil
+import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.parse
@@ -29,11 +35,30 @@ def post(url, data, content_type="application/x-www-form-urlencoded"):
         return e.code, b""
 
 
+def compile_doodler():
+    """Builds doodle.swift once, so each drawing takes a moment rather than a compile. None without Swift."""
+    if not shutil.which("swiftc"):
+        return None
+    out = os.path.join(tempfile.mkdtemp(), "doodle")
+    built = subprocess.run(["swiftc", "-O", "-o", out, os.path.join(HERE, "doodle.swift")], capture_output=True)
+    return out if built.returncode == 0 else None
+
+
+DOODLER = None
+
+
+def fetch(url):
+    with urllib.request.urlopen(url, timeout=10) as response:
+        return response.read()
+
+
 class Bot:
-    def __init__(self, host, name, selfie):
+    def __init__(self, host, name, selfie, number):
         self.base = f"http://{host}"
         self.name = name
         self.selfie = selfie
+        self.number = number
+        self.drawings = 0
         status, body = post(f"{self.base}/api/join", urllib.parse.urlencode({"name": name}).encode())
         if status != 200:
             sys.exit(f"{name} couldn't join ({status}): is the TV in its room?")
@@ -63,7 +88,8 @@ class Bot:
         elif stage in ("ANSWER", "PHOTO") and game["answered"] is None:
             todo = lambda: self.act("/api/answer", f"option={random.randrange(4)}".encode())
         elif stage == "DRAW" and not me_spotlight and not game["drew"]:
-            todo = lambda: self.act("/api/drawing", self.selfie, "image/jpeg")
+            spotlight = game.get("spotlight")
+            todo = lambda: self.act("/api/drawing", self.drawing(spotlight), "image/jpeg")
         # With only one drawing that isn't theirs, a player has no choice and doesn't pick.
         elif stage == "PICK" and game["picked"] is None and game.get("picks", True):
             choices = [d for d in game.get("drawers", []) if d != self.id]
@@ -74,6 +100,23 @@ class Bot:
             return
         self.acted.add(key)
         threading.Timer(random.uniform(2, 8), todo).start()
+
+    def drawing(self, spotlight):
+        """A doodle on the spotlight player's selfie, a different one each time; their own selfie if that fails."""
+        if DOODLER is None or spotlight is None:
+            return self.selfie
+        try:
+            folder = tempfile.mkdtemp()
+            selfie, out = os.path.join(folder, "selfie.jpg"), os.path.join(folder, "drawing.jpg")
+            with open(selfie, "wb") as f:
+                f.write(fetch(f"{self.base}/selfie/{spotlight}?t={self.token}&v=1"))
+            subprocess.run([DOODLER, selfie, out, str(self.number + self.drawings)], check=True)
+            self.drawings += 1
+            with open(out, "rb") as f:
+                return f.read()
+        except Exception as e:
+            print(f"{self.name}: couldn't draw ({e}); handing in my selfie")
+            return self.selfie
 
     def follow(self):
         """Reads the event stream for as long as the TV keeps it open, reconnecting like a browser would."""
@@ -94,10 +137,17 @@ def main():
         sys.exit(__doc__)
     host = sys.argv[1]
     count = int(sys.argv[2]) if len(sys.argv) > 2 else 2
+    global DOODLER
+    DOODLER = compile_doodler()
+    folder = os.environ.get("BOT_SELFIES")
+    selfies = sorted(glob.glob(os.path.join(folder, "*.jp*g"))) if folder else \
+        [os.path.join(HERE, "bot1.jpg"), os.path.join(HERE, "bot2.jpg")]
+    if not selfies:
+        sys.exit(f"No JPEGs in {folder}")
     bots = []
     for i in range(count):
-        with open(os.path.join(HERE, f"bot{i % 2 + 1}.jpg"), "rb") as f:
-            bots.append(Bot(host, NAMES[i % len(NAMES)], f.read()))
+        with open(selfies[i % len(selfies)], "rb") as f:
+            bots.append(Bot(host, NAMES[i % len(NAMES)], f.read(), i))
     for bot in bots:
         threading.Thread(target=bot.follow, daemon=True).start()
     print("bots are playing; Ctrl-C to stop")

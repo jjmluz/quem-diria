@@ -9,6 +9,22 @@ by scanning a QR code on the TV, takes a selfie, and then votes in secret on que
 Nothing to install on the phones: the TV app runs a small web server on the home network and the phones
 open its page.
 
+![The room on the TV, with six players in](docs/screenshots/lobby.jpg)
+
+| | |
+|:---:|:---:|
+| ![A question: five of six have voted](docs/screenshots/vote.jpg) | ![The reveal: who the room picked, and who scored](docs/screenshots/reveal.jpg) |
+| Everyone votes on their phone | The reveal: you score for agreeing with the room |
+| ![Chloe in the spotlight, and everyone's guesses](docs/screenshots/spotlight.jpg) | ![Five drawings on Maya's selfie, with their votes](docs/screenshots/drawings.jpg) |
+| In the spotlight: guess what Chloe answered | Drawing on the spotlight player's selfie |
+| ![The scores so far](docs/screenshots/scores.jpg) | ![Maya wins, with everyone's award and the best drawings](docs/screenshots/end.jpg) |
+| The scores | The end: awards and the best drawings |
+
+![The phone page: voting, guessing, drawing and picking a drawing](docs/screenshots/phones.jpg)
+
+*The faces are of people who don't exist: AI-generated portraits in the public domain, from
+[Wikimedia Commons](https://commons.wikimedia.org/wiki/Category:AI-generated_realistic_faces).*
+
 ## Status
 
 **Milestones 1 to 4 are built**; milestone 5 (sharing results with the launcher and Photos TV) is for later.

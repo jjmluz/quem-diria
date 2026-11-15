@@ -5,8 +5,7 @@ plugins {
 
 /**
  * Copies the family's own files, kept out of git, into the app's assets under [folder] when they're there:
- * the music (`music/`: `lobby.*` for the room, `background_*` for the game, `winner.*` for its end) and the photo rules
- * (`private/photo-rules.json`: photos kept out of the game). Without them the app is quiet, with every photo allowed.
+ * the photo rules (`private/photo-rules.json`: photos kept out of the game). Without them every photo is allowed.
  */
 abstract class CopyIntoAssets : DefaultTask() {
     @get:InputFiles
@@ -26,9 +25,36 @@ abstract class CopyIntoAssets : DefaultTask() {
     }
 }
 
-val copyMusic = tasks.register<CopyIntoAssets>("copyMusic") {
-    files.from(rootProject.fileTree("music") { include("lobby.*", "background_*", "winner.*") })
-    folder.set("music")
+/**
+ * Bundles the music, kind by kind: `lobby.*` for the room, `background_*` for the game, `winner.*` for its end.
+ * Your own tracks in `music-custom/` (kept out of git) replace the free ones in `music/` for each kind they have,
+ * so you can swap just the lobby's, say. The choice is made here rather than when Gradle configures the build, so
+ * adding or removing a track is always picked up.
+ */
+abstract class CopyMusic : DefaultTask() {
+    @get:InputFiles
+    abstract val free: ConfigurableFileCollection
+
+    @get:InputFiles
+    abstract val custom: ConfigurableFileCollection
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        val out = outputDir.get().asFile
+        out.deleteRecursively()
+        for (kind in listOf("lobby.", "background_", "winner.")) {
+            fun of(tracks: ConfigurableFileCollection) = tracks.files.filter { it.isFile && it.name.startsWith(kind) }
+            of(custom).ifEmpty { of(free) }.forEach { it.copyTo(out.resolve("music/${it.name}"), overwrite = true) }
+        }
+    }
+}
+
+val copyMusic = tasks.register<CopyMusic>("copyMusic") {
+    free.from(rootProject.fileTree("music"))
+    custom.from(rootProject.fileTree("music-custom"))
 }
 
 val copyPhotoRules = tasks.register<CopyIntoAssets>("copyPhotoRules") {
@@ -38,7 +64,7 @@ val copyPhotoRules = tasks.register<CopyIntoAssets>("copyPhotoRules") {
 
 androidComponents {
     onVariants { variant ->
-        variant.sources.assets?.addGeneratedSourceDirectory(copyMusic, CopyIntoAssets::outputDir)
+        variant.sources.assets?.addGeneratedSourceDirectory(copyMusic, CopyMusic::outputDir)
         variant.sources.assets?.addGeneratedSourceDirectory(copyPhotoRules, CopyIntoAssets::outputDir)
     }
 }

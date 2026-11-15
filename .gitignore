@@ -7,8 +7,8 @@ local.properties
 .DS_Store
 bin/
 
-# Music: the family's own tracks, not ours to share. The build bundles them when they're there.
-/music/
+# Your own music, not ours to share: the build bundles it in place of the free tracks in music/.
+/music-custom/
 # Photos kept out of the game, by person and year: the family's names, so not in git.
 /private/
 # A picture the splash screen was drawn after: a reference, not ours to share.

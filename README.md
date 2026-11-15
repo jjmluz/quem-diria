@@ -105,14 +105,43 @@ Install the release build, not the debug build. A release build you make yoursel
 key, so it can't update a copy installed from GitHub (or the other way round). Uninstall one before installing
 the other.
 
-**Your own music:** the build bundles whatever it finds in a `music/` folder at the project root (kept out of
-git): `lobby.*` loops in the room, `background_*` play shuffled during the game, and `winner.*` loops on the
-final screen (`.ogg` or `.m4a`). Without them, the game only has its sound effects.
-
 GitHub Actions lints, tests and builds on every push and pull request. Pushing a tag like `v1.2.0` builds the
 APK with that version, signed with the release key from the repository's secrets, and publishes it on the
 [Releases](https://github.com/jjmluz/quem-diria/releases) page.
 
+### Your own music
+
+The build bundles the free tracks in `music/` (see [Music](#music)). To play your own instead, put them in a
+`music-custom/` folder at the project root, which stays out of git, named like this:
+
+| File | Plays |
+|---|---|
+| `lobby.*` | in the room, looping |
+| `background_1.*`, `background_2.*`, … | during the game, one after another in a shuffled order |
+| `winner.*` | on the final screen, looping |
+
+Any format Android plays works (`.mp3`, `.m4a`, `.ogg`). Each kind you provide replaces the free one, so you
+can change only the lobby's music, say, and keep the rest: one `background_*` file of yours replaces all four
+free game tracks. Then build and install as above. Your music is only in the APK you build; nothing of it goes
+to GitHub.
+
+## Music
+
+The free tracks in `music/` come from [Pixabay](https://pixabay.com/music/) and are used under the
+[Pixabay Content License](https://pixabay.com/service/license-summary/), not the MIT License:
+
+| File | Track | By | Pixabay ID |
+|---|---|---|---|
+| `lobby.mp3` | Menu Music | sergequadrado | 251877 |
+| `background_1.mp3` | Indie Pop | atlasaudio | 593050 |
+| `background_2.mp3` | Quiz Master | backgroundmusicmaster | 382651 |
+| `background_3.mp3` | Indie Pop Music | danyvin | 631888 |
+| `background_4.mp3` | Fun Fun Music | ikoliks_aj | 632028 |
+| `winner.mp3` | Award (Awards Ceremony Music) | nastelbom | 602450 |
+
+Thanks to the musicians.
+
 ## License
 
-Quem Diria? is released under the [MIT License](LICENSE).
+Quem Diria?'s code and questions are released under the [MIT License](LICENSE). The music has its own licence:
+see [Music](#music).

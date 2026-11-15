@@ -12,9 +12,9 @@ import java.io.IOException
 
 /**
  * Music from the app's assets, faded in and out: the room's ([LOBBY], one track looping), the game's
- * ([GAME], its tracks one after another in a shuffled order) and the winner's ([WINNER], looping on the end screen). Tracks are only there when the build found them to
- * bundle (the `music` folder; see `copyMusic` in app/build.gradle.kts): the family's tracks aren't ours to share,
- * so they stay out of git, and a build without them is simply quiet.
+ * ([GAME], its tracks one after another in a shuffled order) and the winner's ([WINNER], looping on the end
+ * screen). The build bundles the free tracks in the `music` folder, or your own from `music-custom`, which stays out
+ * of git (see `CopyMusic` in app/build.gradle.kts). A kind with no tracks is simply quiet.
  *
  * [duck] lowers it while the narrator speaks, so the questions can be heard over it.
  */

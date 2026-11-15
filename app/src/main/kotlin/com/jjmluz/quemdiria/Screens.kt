@@ -43,7 +43,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -239,6 +238,12 @@ private fun Players(room: Room, faces: Map<String, ImageBitmap>, modifier: Modif
     }
 }
 
+/**
+ * A seat's photo. Four seats across leave each about 91 dp at 960 dp wide, and two rows of them must fit under the
+ * heading above the buttons: a bigger photo was squeezed into an oval and cut off the second row's names.
+ */
+private val SeatAvatar = 88.dp
+
 @Composable
 private fun PlayerSeat(player: Player, face: ImageBitmap?) {
     val alpha by animateFloatAsState(if (player.connected) 1f else 0.4f, label = "connected")
@@ -247,24 +252,20 @@ private fun PlayerSeat(player: Player, face: ImageBitmap?) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box {
-            Avatar(player, 104.dp)
+            Avatar(player, SeatAvatar)
             // Linked to Google Photos: their face there, as a badge.
             if (player.person != null) PersonBadge(face, Modifier.align(Alignment.BottomEnd))
         }
         Spacer(Modifier.height(12.dp))
-        BasicText(
-            player.name,
-            style = TextStyle(color = TextColour, fontSize = 18.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        // A long name shrinks to fit the seat rather than being cut off.
+        Text(player.name, 18.sp, weight = FontWeight.Bold, align = TextAlign.Center, lines = 1)
     }
 }
 
 @Composable
 private fun EmptySeat() {
     Column(Modifier.fillMaxWidth().padding(vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Canvas(Modifier.size(104.dp)) {
+        Canvas(Modifier.size(SeatAvatar)) {
             drawCircle(
                 Card,
                 radius = size.minDimension / 2 - 2.dp.toPx(),

@@ -148,17 +148,6 @@ to GitHub.
 The free tracks in `music/` come from [Pixabay](https://pixabay.com/music/) and are used under the
 [Pixabay Content License](https://pixabay.com/service/license-summary/), not the MIT License:
 
-| File | Track | By | Pixabay ID |
-|---|---|---|---|
-| `lobby.mp3` | Menu Music | sergequadrado | 251877 |
-| `background_1.mp3` | Indie Pop | atlasaudio | 593050 |
-| `background_2.mp3` | Quiz Master | backgroundmusicmaster | 382651 |
-| `background_3.mp3` | Indie Pop Music | danyvin | 631888 |
-| `background_4.mp3` | Fun Fun Music | ikoliks_aj | 632028 |
-| `winner.mp3` | Award (Awards Ceremony Music) | nastelbom | 602450 |
-
-Thanks to the musicians.
-
 ## License
 
 Quem Diria?'s code and questions are released under the [MIT License](LICENSE). The music has its own licence:

@@ -9,6 +9,8 @@ by scanning a QR code on the TV, takes a selfie, and then votes in secret on que
 Nothing to install on the phones: the TV app runs a small web server on the home network and the phones
 open its page.
 
+Inspired by [That's You!](https://en.wikipedia.org/wiki/That%27s_You!) by Wish Studios for the PlayStation 4.
+
 ![The room on the TV, with six players in](docs/screenshots/lobby.jpg)
 
 | | |

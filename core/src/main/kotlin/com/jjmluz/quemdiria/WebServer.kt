@@ -157,6 +157,7 @@ class WebServer(
             }
             request.method == "GET" && request.path.startsWith("/drawing/") -> drawing(out, request)
             request.method == "GET" && request.path == "/tie-drawing" -> tieDrawing(out, request)
+            request.method == "GET" && request.path.startsWith("/keep/") -> keep(out, request)
             request.method == "POST" && request.path == "/api/join" -> join(out, request.form())
             request.method == "POST" && request.path == "/api/name" -> {
                 if (lobby.playerFor(token) == null) return respond(out, 401, "")
@@ -258,6 +259,20 @@ class WebServer(
         if (lobby.playerFor(request.query["t"].orEmpty()) == null) return respond(out, 403, "")
         val memory = lobby.room.value.game?.tie?.question as? Memory.Drew ?: return respond(out, 404, "")
         respond(out, 200, memory.drawing.jpeg, "image/jpeg", "Cache-Control: max-age=3600\r\n")
+    }
+
+    /** The last game's pictures, for players to save: `/keep/final` (the final screen) and `/keep/drawing/<n>`. */
+    private fun keep(out: OutputStream, request: Request) {
+        if (lobby.playerFor(request.query["t"].orEmpty()) == null) return respond(out, 403, "")
+        val keepsake = lobby.room.value.keepsake ?: return respond(out, 404, "")
+        val name = request.path.removePrefix("/keep/")
+        val jpeg = when {
+            name == "final" -> keepsake.finalScreen
+            name.startsWith("drawing/") -> name.removePrefix("drawing/").toIntOrNull()?.let { keepsake.drawings.getOrNull(it)?.jpeg }
+            else -> null
+        } ?: return respond(out, 404, "")
+        // The address carries the game's id (`k`), so it never means another game's picture.
+        respond(out, 200, jpeg, "image/jpeg", "Cache-Control: max-age=3600\r\n")
     }
 
     private fun page(out: OutputStream, path: String) {
@@ -411,6 +426,18 @@ class WebServer(
             }
             append("]")
             room.game?.let { append(",\"game\":"); gameJson(it, room, you, now) }
+            room.keepsake?.let { k ->
+                // Captions for the drawings: what was drawn ("Rui as a pirate") and who drew it.
+                append(",\"keep\":{\"id\":").append(k.id).append(",\"final\":").append(k.finalScreen != null)
+                append(",\"drawings\":[")
+                k.drawings.forEachIndexed { i, d ->
+                    if (i > 0) append(',')
+                    val drawn = room.player(d.spotlightId)?.name.orEmpty()
+                    append("{\"prompt\":").append(jsonString(d.prompt.withName(drawn)))
+                    append(",\"by\":").append(jsonString(room.player(d.drawerId)?.name.orEmpty())).append('}')
+                }
+                append("]}")
+            }
             append("}")
         }
 

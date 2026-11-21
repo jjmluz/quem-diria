@@ -11,6 +11,8 @@ import android.view.KeyEvent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.toArgb
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -335,6 +337,50 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
             right.isEmpty() -> app.getString(R.string.tie_nobody)
             right.size == tie.contenders.size -> app.getString(R.string.tie_still)
             else -> app.getString(R.string.tie_still_in, names)
+        }
+    }
+
+    private var keptFinalScreen = -1
+
+    /**
+     * The end screen of game [id] as drawn on the TV ([image]): framed with a margin, the game's name and the
+     * date below, as a JPEG for the phones to save. Once per game.
+     */
+    fun keepFinalScreen(id: Int, image: ImageBitmap) {
+        if (id == keptFinalScreen) return
+        keptFinalScreen = id
+        viewModelScope.launch(Dispatchers.Default) {
+            val shot = image.asAndroidBitmap().copy(android.graphics.Bitmap.Config.ARGB_8888, false)
+            val margin = shot.width / 24
+            val footer = margin * 2
+            val out = android.graphics.Bitmap.createBitmap(shot.width + 2 * margin, shot.height + margin + footer, android.graphics.Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(out)
+            canvas.drawColor(Background.toArgb())
+            canvas.drawBitmap(shot, margin.toFloat(), margin.toFloat(), null)
+            val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                textSize = footer * 0.4f
+                // The logo's black weight where Android has it (9, Pie); bold before.
+                typeface = if (android.os.Build.VERSION.SDK_INT >= 28) {
+                    android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, 900, false)
+                } else {
+                    android.graphics.Typeface.DEFAULT_BOLD
+                }
+            }
+            val baseline = shot.height + margin + footer * 0.62f
+            paint.color = TextColour.toArgb()
+            canvas.drawText("QUEM DIRIA", margin.toFloat(), baseline, paint)
+            val x = margin + paint.measureText("QUEM DIRIA")
+            paint.color = Accent.toArgb()
+            canvas.drawText("?", x, baseline, paint)
+            val date = java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.LONG)
+                .withLocale(getApplication<Application>().resources.configuration.locales[0])
+                .format(java.time.LocalDate.now())
+            paint.color = Muted.toArgb()
+            paint.typeface = android.graphics.Typeface.DEFAULT
+            paint.textAlign = android.graphics.Paint.Align.RIGHT
+            canvas.drawText(date, (out.width - margin).toFloat(), baseline, paint)
+            val jpeg = java.io.ByteArrayOutputStream().also { out.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }.toByteArray()
+            lobby.keepFinalScreen(id, jpeg)
         }
     }
 

@@ -23,6 +23,10 @@ Object.assign(STRINGS.en, {
   tieWatch: 'Tie-breaker between {names}. Look at the TV!',
   tieWhoDrew: 'Who drew this?', tiePicked: 'Tonight the room picked someone for:', tiePickedWho: 'Who was it?',
   tieAnswered: 'What did {name} answer?', tieRight: 'Right! ✅', tieWrong: 'Not this time',
+  keepTitle: 'Keep this game’s pictures',
+  keepHint: 'Tap Save, or press and hold a picture to save it to your phone.',
+  keepFinal: 'The final scores', keepBy: '{prompt}, by {name}', keepWaiting: 'The final scores are on their way…',
+  saveAll: 'Save all',
 });
 Object.assign(STRINGS.pt, {
   question: 'Pergunta {n} de {of}', doubleRound: 'Final: pontos a dobrar!',
@@ -45,6 +49,10 @@ Object.assign(STRINGS.pt, {
   tieWatch: 'Desempate entre {names}. Olha para a TV!',
   tieWhoDrew: 'Quem fez este desenho?', tiePicked: 'Esta noite a sala escolheu alguém para:', tiePickedWho: 'Quem foi?',
   tieAnswered: 'O que respondeu {name}?', tieRight: 'Certo! ✅', tieWrong: 'Desta vez não',
+  keepTitle: 'Guarda as imagens deste jogo',
+  keepHint: 'Toca em Guardar, ou mantém o dedo numa imagem para a guardares no telemóvel.',
+  keepFinal: 'A pontuação final', keepBy: '{prompt}, de {name}', keepWaiting: 'A pontuação final vem a caminho…',
+  saveAll: 'Guardar todas',
 });
 
 const PEN_COLOURS = ['#111111', '#FFFFFF', '#FF5C8A', '#FFC83D', '#2EC4B6', '#4D8DFF', '#A974FF', '#7B4B2A'];
@@ -92,7 +100,8 @@ function leaveGame() {
 /** Draws the stage. Rebuilt only when something this phone shows changes, so a drawing isn't lost. */
 function renderGame(room) {
   const g = room.game;
-  const key = [g.serial, g.voted, g.answered, g.drew, g.picked, g.score].join('|');
+  // The final screen's picture arrives after the end screen: it changes what's shown.
+  const key = [g.serial, g.voted, g.answered, g.drew, g.picked, g.score, room.keep ? room.keep.final : ''].join('|');
   deadline = g.remaining ? Date.now() + g.remaining : 0;
   timerPaused = g.paused;
   // The same screen: just the timer, which stops while paused and runs again after.
@@ -489,4 +498,53 @@ function renderEnd(room, g, body) {
     body.append(el('div', { class: 'award' }, el('p', { class: 'award-q' }, T.noAward)));
   }
   body.append(el('p', { class: 'hint' }, T.nextGame));
+  const keep = renderKeep(room);
+  if (keep) body.append(keep);
+}
+
+/**
+ * The last game's pictures to save: the TV's final screen and every drawing, each with a Save link (a
+ * download), and Save all. Pressing and holding a picture saves it too, which is the way on an iPhone.
+ * Shown at the end and in the room until the next game starts. Null with nothing to keep.
+ */
+function renderKeep(room) {
+  const k = room.keep;
+  if (!k) return null;
+  // Named by the day it was played, so they sort together in a phone's downloads.
+  const day = new Date().toLocaleDateString('sv');
+  const query = '?t=' + encodeURIComponent(token) + '&k=' + k.id;
+  const items = [];
+  if (k.final) items.push({ src: '/keep/final' + query, file: 'quem-diria-' + day + '-scores.jpg', caption: T.keepFinal, wide: true });
+  k.drawings.forEach((d, i) => items.push({
+    src: '/keep/drawing/' + i + query,
+    file: 'quem-diria-' + day + '-drawing-' + (i + 1) + '.jpg',
+    caption: fill(T.keepBy, { prompt: d.prompt, name: d.by }),
+  }));
+  if (!items.length && !k.final) return null;
+  const links = [];
+  const grid = el('div', { class: 'keep-grid' });
+  for (const item of items) {
+    const link = el('a', { class: 'save', href: item.src, download: item.file }, T.save);
+    links.push(link);
+    grid.append(el('figure', { class: 'keep-item' + (item.wide ? ' wide' : '') },
+      el('img', { src: item.src, alt: item.caption, loading: 'lazy' }),
+      el('figcaption', {}, el('span', {}, item.caption), link)));
+  }
+  const all = el('button', {
+    type: 'button',
+    class: 'primary',
+    onclick: async () => {
+      // One at a time: browsers ask once before letting a page download several files, and drop some if rushed.
+      for (const link of links) {
+        link.click();
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      }
+    },
+  }, T.saveAll);
+  return el('section', { class: 'keep' },
+    el('h3', {}, T.keepTitle),
+    el('p', { class: 'hint' }, T.keepHint),
+    k.final ? null : el('p', { class: 'hint' }, T.keepWaiting),
+    grid,
+    links.length > 1 ? all : null);
 }

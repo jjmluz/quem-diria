@@ -264,3 +264,15 @@ form button[type=submit]:disabled { opacity: 0.5; }
 .award-q { margin: 0 0 6px; font-size: 20px; font-weight: 800; }
 
 .draw-label { margin: 0; color: var(--yellow, #FFC83D); font-weight: 700; }
+
+/* The last game's pictures, to save. */
+.keep { margin: 28px 0 8px; text-align: left; }
+.keep h3 { margin: 0 0 4px; font-size: 20px; }
+.keep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0 16px; }
+.keep-item { margin: 0; background: var(--card); border-radius: 14px; overflow: hidden; }
+.keep-item.wide { grid-column: 1 / -1; }
+.keep-item img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+.keep-item.wide img { aspect-ratio: auto; }
+.keep-item figcaption { display: flex; align-items: center; gap: 8px; padding: 8px 10px; font-size: 13px; color: var(--muted); }
+.keep-item figcaption span { flex: 1; min-width: 0; }
+.keep-item .save { color: var(--accent); font-weight: 700; text-decoration: none; white-space: nowrap; }

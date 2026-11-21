@@ -59,6 +59,9 @@ Inspired by [That's You!](https://en.wikipedia.org/wiki/That%27s_You!) by Wish S
   share the win. It changes no scores, only who won.
 - **The end**: the winner, an "award" for each player (the question the room most often picked them for), and
   the best drawings.
+- **Keep the pictures**: at the end, each phone offers the final scores (a picture of the TV's end screen, with
+  the date) and every drawing of the game, to save to the phone. They stay on the phones' room page until the
+  next game starts; the TV keeps them in memory only.
 
 ## Playing
 

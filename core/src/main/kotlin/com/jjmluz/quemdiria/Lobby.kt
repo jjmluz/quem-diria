@@ -31,12 +31,20 @@ data class Room(
     val mode: Mode = Mode.FAMILY,
     /** The game being played, or null in the lobby. */
     val game: Game? = null,
+    /** The last game's pictures, for the phones to save, from its end until the next game starts. */
+    val keepsake: Keepsake? = null,
 ) {
     val canStart: Boolean get() = phase == Phase.LOBBY && players.size >= Lobby.MIN_PLAYERS
     /** Every player is linked to a person in Google Photos, so the game has photo questions. */
     val allLinked: Boolean get() = players.isNotEmpty() && players.all { it.person != null }
     fun player(id: Int?): Player? = players.firstOrNull { it.id == id }
 }
+
+/**
+ * A finished game's pictures: its [drawings], and the TV's [finalScreen] as a JPEG once the TV has drawn it.
+ * [id] is the game's last stage number, which names it in the pictures' addresses.
+ */
+class Keepsake(val id: Int, val drawings: List<Drawing>, val finalScreen: ByteArray? = null)
 
 sealed interface JoinResult {
     data class Joined(val token: String, val id: Int) : JoinResult
@@ -59,6 +67,7 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS, private val robotRandom: 
     private var phase = Phase.LOBBY
     private var mode = Mode.FAMILY
     private var game: Game? = null
+    private var keepsake: Keepsake? = null
     private val random = SecureRandom()
 
     /** The last stage number of any game here, so the next game's numbers carry on from it. */
@@ -177,6 +186,7 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS, private val robotRandom: 
         // starting again from 0 showed them an earlier game's drawings.
         game = Game.start(Game.plan(ids, deck, random, photos, spotlights), now, ids.toSet(), seed = random.nextLong(), serial = lastSerial)
         phase = Phase.GAME
+        keepsake = null
         publish()
         return true
     }
@@ -279,10 +289,21 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS, private val robotRandom: 
         return game
     }
 
+    /** The TV's picture of game [id]'s final screen, for the phones to save with its drawings. */
+    @Synchronized
+    fun keepFinalScreen(id: Int, jpeg: ByteArray) {
+        val k = keepsake?.takeIf { it.id == id } ?: return
+        keepsake = Keepsake(k.id, k.drawings, jpeg)
+        publish()
+    }
+
     private fun publish() {
         game = game?.let(::robotsPlay)
-        game?.let { lastSerial = it.serial }
-        _room.value = Room(seats.map { it.player }, phase, mode, game)
+        game?.let { g ->
+            lastSerial = g.serial
+            if (g.stage == Stage.END && keepsake?.id != g.serial) keepsake = Keepsake(g.serial, g.gallery)
+        }
+        _room.value = Room(seats.map { it.player }, phase, mode, game, keepsake)
     }
 
     private fun newToken(): String {

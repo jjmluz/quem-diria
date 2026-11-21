@@ -87,7 +87,7 @@ fun QuemDiriaApp(viewModel: RoomViewModel) {
         if (splash) {
             SplashScreen(onStart = viewModel::onSplashStart, onEnd = viewModel::endSplash)
         } else if (room.phase == Phase.GAME && game != null) {
-            GameScreen(room, game, gamePhotos)
+            GameScreen(room, game, gamePhotos, viewModel::keepFinalScreen)
             paused?.let { PauseOverlay(it, invite) }
         } else {
             LobbyScreen(room, invite, viewModel.wifi, button, faces, photosInstalled, gettingPhotos)

@@ -166,6 +166,10 @@ function draw() {
   const missing = room.min - room.players.length;
   $('status').textContent = missing > 1 ? T.waitingFew.replace('{n}', missing) : missing === 1 ? T.waitingOne : T.ready;
 
+  // The last game's pictures, until the next game starts (renderKeep is in game.js).
+  const keep = renderKeep(room);
+  $('keep').replaceChildren(...(keep ? [keep] : []));
+
   const list = $('players');
   list.replaceChildren(...room.players.map((p) => {
     const li = document.createElement('li');

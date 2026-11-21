@@ -1,6 +1,10 @@
 package com.jjmluz.quemdiria
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -58,7 +62,10 @@ internal val Green = Color(0xFF7BD389)
 
 /** The TV during a game: one screen per stage, faded from one to the next. */
 @Composable
-fun GameScreen(room: Room, game: Game, photos: Map<String, androidx.compose.ui.graphics.ImageBitmap>) {
+fun GameScreen(
+    room: Room, game: Game, photos: Map<String, androidx.compose.ui.graphics.ImageBitmap>,
+    onFinalScreen: (Int, androidx.compose.ui.graphics.ImageBitmap) -> Unit = { _, _ -> },
+) {
     AnimatedContent(
         targetState = game,
         // A new stage fades in; votes coming in within a stage just update it. The outgoing screen keeps its
@@ -83,7 +90,7 @@ fun GameScreen(room: Room, game: Game, photos: Map<String, androidx.compose.ui.g
                 Stage.TIE_INTRO -> TieIntro(room, g)
                 Stage.TIE -> TieScreen(room, g, reveal = false)
                 Stage.TIE_REVEAL -> TieScreen(room, g, reveal = true)
-                Stage.END -> EndScreen(room, g)
+                Stage.END -> EndScreen(room, g, onFinalScreen)
             }
         }
     }
@@ -423,37 +430,51 @@ private fun FinalIntro() {
 }
 
 @Composable
-private fun EndScreen(room: Room, game: Game) {
+private fun EndScreen(room: Room, game: Game, onFinalScreen: (Int, androidx.compose.ui.graphics.ImageBitmap) -> Unit) {
     val ids = room.players.map { it.id }
     val winners = game.winners(ids).mapNotNull { room.player(it) }
     val awards = game.awards(ids).associateBy { it.playerId }
     // The best drawing of each spotlight turn, for the collage.
     val bestDrawings = game.gallery.groupBy { it.spotlightId }.values.mapNotNull { list -> list.maxByOrNull { it.picks } }
+    // The winners, scores and drawings are drawn into a layer as well as on screen, so the TV can make a
+    // picture of them for the phones to save (the OK hint below is left out of it).
+    val layer = rememberGraphicsLayer()
+    LaunchedEffect(game.serial) {
+        delay(1_000) // let the screen fade in and settle
+        onFinalScreen(game.serial, layer.toImageBitmap())
+    }
     // The TV is 960 × 540 dp: the winners, every player's award, the collage and the hint all have to fit, for
     // up to 8 players with long names. Each part gets a fixed share, and its text shrinks to fit that share.
     Column(Modifier.fillMaxSize()) {
-        Row(
-            Modifier.fillMaxWidth().height(96.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Column(
+            Modifier.weight(1f).fillMaxWidth().drawWithContent {
+                layer.record { this@drawWithContent.drawContent() }
+                drawLayer(layer)
+            },
         ) {
-            val side = when {
-                winners.size <= 2 -> 72.dp
-                winners.size <= 4 -> 56.dp
-                else -> 36.dp
+            Row(
+                Modifier.fillMaxWidth().height(96.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                val side = when {
+                    winners.size <= 2 -> 72.dp
+                    winners.size <= 4 -> 56.dp
+                    else -> 36.dp
+                }
+                winners.forEach { Box(Modifier.border(4.dp, Yellow, CircleShape).padding(4.dp)) { Avatar(it, side) } }
+                Spacer(Modifier.width(4.dp))
+                val names = winners.joinToString(" & ") { it.name }
+                Text(
+                    if (winners.size > 1) stringResource(R.string.winners_draw, names) else stringResource(R.string.winner, names),
+                    40.sp, weight = FontWeight.Black, modifier = Modifier.weight(1f), lines = 3,
+                )
             }
-            winners.forEach { Box(Modifier.border(4.dp, Yellow, CircleShape).padding(4.dp)) { Avatar(it, side) } }
-            Spacer(Modifier.width(4.dp))
-            val names = winners.joinToString(" & ") { it.name }
-            Text(
-                if (winners.size > 1) stringResource(R.string.winners_draw, names) else stringResource(R.string.winner, names),
-                40.sp, weight = FontWeight.Black, modifier = Modifier.weight(1f), lines = 3,
-            )
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-            AwardGrid(room, game, awards, Modifier.weight(1f).fillMaxHeight())
-            if (bestDrawings.isNotEmpty()) Collage(bestDrawings)
+            Spacer(Modifier.height(12.dp))
+            Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
+                AwardGrid(room, game, awards, Modifier.weight(1f).fillMaxHeight())
+                if (bestDrawings.isNotEmpty()) Collage(bestDrawings)
+            }
         }
         Spacer(Modifier.height(12.dp))
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {

@@ -11,7 +11,7 @@ Object.assign(STRINGS.en, {
   guessFor: 'Guess what {name} answered:',
   photoOf: 'A photo of {name}: look at the TV!',
   beingDrawn: 'The others are drawing you… 😬', drawn: 'Sent! Waiting for the others.',
-  draw: 'Draw:', send: 'Send', undo: 'Undo', sendFailed: 'That didn’t send. Try again.',
+  draw: 'Draw:', send: 'Send', undo: 'Undo', rubber: 'Rubber', sendFailed: 'That didn’t send. Try again.',
   pickDrawing: 'Pick the best drawing', yours: 'Yours',
   othersPick: 'Just two drawings: {name} picks the best.',
   scores: 'Scores', finalIntro: 'Final round coming: points count double!',
@@ -29,7 +29,7 @@ Object.assign(STRINGS.pt, {
   guessFor: 'Adivinha o que {name} respondeu:',
   photoOf: 'Uma foto de {name}: olha para a TV!',
   beingDrawn: 'Os outros estão a desenhar-te… 😬', drawn: 'Enviado! À espera dos outros.',
-  draw: 'Desenha:', send: 'Enviar', undo: 'Desfazer', sendFailed: 'Não foi enviado. Tenta outra vez.',
+  draw: 'Desenha:', send: 'Enviar', undo: 'Desfazer', rubber: 'Borracha', sendFailed: 'Não foi enviado. Tenta outra vez.',
   pickDrawing: 'Escolhe o melhor desenho', yours: 'O teu',
   othersPick: 'Só dois desenhos: quem escolhe é {name}.',
   scores: 'Pontuação', finalIntro: 'Vem aí a ronda final: pontos a dobrar!',
@@ -228,15 +228,21 @@ function renderDraw(room, g, body, spotlight) {
     send);
 }
 
-/** A square canvas over the spotlight player's selfie, with pens, undo, and a JPEG of the result. */
+/** A square canvas over the spotlight player's selfie, with pens, a rubber, undo, and a JPEG of the result. */
 class DrawingPad {
   constructor(subject) {
     this.size = 480;
     this.strokes = [];
     this.colour = PEN_COLOURS[0];
     this.width = PEN_SIZES[0];
+    /** The rubber is picked: strokes rub out drawing (never the selfie under it) until a colour is picked. */
+    this.rubbing = false;
     this.canvas = el('canvas', { class: 'pad', width: this.size, height: this.size });
     this.ctx = this.canvas.getContext('2d');
+    // The strokes go on a layer of their own, laid over the selfie, so the rubber clears only what was drawn.
+    this.layer = document.createElement('canvas');
+    this.layer.width = this.size;
+    this.layer.height = this.size;
     this.subject = subject;
     this.background = null;
     if (subject && subject.selfie) {
@@ -252,7 +258,7 @@ class DrawingPad {
     };
     this.canvas.addEventListener('pointerdown', (e) => {
       this.canvas.setPointerCapture(e.pointerId);
-      current = { colour: this.colour, width: this.width, points: [point(e)] };
+      current = { colour: this.colour, width: this.width, rub: this.rubbing, points: [point(e)] };
       this.strokes.push(current);
       this.redraw();
     });
@@ -282,24 +288,34 @@ class DrawingPad {
         c.fillText(Array.from(this.subject.name)[0].toUpperCase(), s / 2, s / 2 + 10);
       }
     }
-    c.lineCap = 'round';
-    c.lineJoin = 'round';
+    const l = this.layer.getContext('2d');
+    l.clearRect(0, 0, s, s);
+    l.lineCap = 'round';
+    l.lineJoin = 'round';
     for (const stroke of this.strokes) {
-      c.strokeStyle = stroke.colour;
-      c.fillStyle = stroke.colour;
-      c.lineWidth = stroke.width;
-      const [first, ...rest] = stroke.points;
-      if (rest.length === 0) {
-        c.beginPath();
-        c.arc(first[0], first[1], stroke.width / 2, 0, Math.PI * 2);
-        c.fill();
-        continue;
-      }
-      c.beginPath();
-      c.moveTo(first[0], first[1]);
-      for (const [x, y] of rest) c.lineTo(x, y);
-      c.stroke();
+      l.globalCompositeOperation = stroke.rub ? 'destination-out' : 'source-over';
+      this.drawStroke(l, stroke);
     }
+    l.globalCompositeOperation = 'source-over';
+    c.drawImage(this.layer, 0, 0);
+  }
+
+  /** One stroke on [c]: a dot for a tap, else a line through its points. */
+  drawStroke(c, stroke) {
+    c.strokeStyle = stroke.colour;
+    c.fillStyle = stroke.colour;
+    c.lineWidth = stroke.width;
+    const [first, ...rest] = stroke.points;
+    if (rest.length === 0) {
+      c.beginPath();
+      c.arc(first[0], first[1], stroke.width / 2, 0, Math.PI * 2);
+      c.fill();
+      return;
+    }
+    c.beginPath();
+    c.moveTo(first[0], first[1]);
+    for (const [x, y] of rest) c.lineTo(x, y);
+    c.stroke();
   }
 
   toolbar() {
@@ -312,7 +328,9 @@ class DrawingPad {
         'aria-label': colour,
         onclick: () => {
           this.colour = colour;
+          this.rubbing = false;
           swatches.forEach((s) => s.classList.toggle('chosen', s === b));
+          rubber.classList.remove('chosen');
         },
       });
       return b;
@@ -328,9 +346,25 @@ class DrawingPad {
       }, el('span', { style: 'width:' + Math.min(width / 2 + 4, 24) + 'px;height:' + Math.min(width / 2 + 4, 24) + 'px' }));
       return b;
     });
+    const rubber = el('button', {
+      type: 'button',
+      class: 'icon-tool',
+      'aria-label': T.rubber,
+      title: T.rubber,
+      onclick: () => {
+        this.rubbing = true;
+        rubber.classList.add('chosen');
+        swatches.forEach((s) => s.classList.remove('chosen'));
+      },
+    });
+    // A rubber at a slant, with the line it leaves clean.
+    rubber.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" ' +
+      'stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M8 20 3.7 15.7a2 2 0 0 1 0-2.8l9.2-9.2a2 2 0 0 1 2.8 0l4.6 4.6a2 2 0 0 1 0 2.8L12 19.4"/>' +
+      '<path d="m9 10.6 6.4 6.4"/><path d="M8 20h13"/></svg>';
     const undo = el('button', {
       type: 'button',
-      class: 'undo',
+      class: 'icon-tool undo',
       'aria-label': T.undo,
       title: T.undo,
       onclick: () => { this.strokes.pop(); this.redraw(); },
@@ -339,7 +373,7 @@ class DrawingPad {
     undo.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" ' +
       'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
-    bar.append(...swatches, ...sizes, undo);
+    bar.append(...swatches, ...sizes, rubber, undo);
     return bar;
   }
 

@@ -237,10 +237,12 @@ form button[type=submit]:disabled { opacity: 0.5; }
 }
 .size span { display: block; border-radius: 50%; background: var(--text); }
 .size.chosen { outline: 3px solid var(--accent); }
-.undo {
-  margin-left: auto; width: 44px; height: 36px; padding: 0; border: 0; border-radius: 10px;
+.icon-tool {
+  width: 44px; height: 36px; padding: 0; border: 0; border-radius: 10px;
   background: var(--card); color: var(--text); display: flex; align-items: center; justify-content: center;
 }
+.icon-tool.chosen { outline: 3px solid var(--accent); }
+.undo { margin-left: auto; }
 .primary {
   display: block; width: 100%; padding: 14px; font-size: 20px; font-weight: 700;
   color: #170F2B; background: var(--accent); border: 0; border-radius: 14px;

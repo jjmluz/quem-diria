@@ -136,6 +136,17 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         null
     }
 
+    /** The home Wi-Fi to show in the room (`private/wifi.json`, bundled when the build finds it); null without it. */
+    val wifi: Wifi? = try {
+        val json = org.json.JSONObject(app.assets.open(WIFI).bufferedReader().use { it.readText() })
+        Wifi(json.getString("name"), json.optString("password"))
+    } catch (e: java.io.FileNotFoundException) {
+        null
+    } catch (e: Exception) {
+        Log.e(TAG, "Can't read $WIFI", e)
+        null
+    }
+
     private val _faces = MutableStateFlow<Map<String, ImageBitmap>>(emptyMap())
     /** Faces of Google Photos people by their key, loaded as people are listed. */
     val faces: StateFlow<Map<String, ImageBitmap>> = _faces.asStateFlow()
@@ -801,6 +812,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     private companion object {
         const val FACE_PX = 160
         const val PHOTO_RULES = "private/photo-rules.json"
+        const val WIFI = "private/wifi.json"
         const val FACE_MAX_AGE_MS = 30L * 24 * 60 * 60 * 1000
         const val PHOTO_WIDTH = 1600
         const val PHOTO_HEIGHT = 900

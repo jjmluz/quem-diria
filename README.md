@@ -59,7 +59,8 @@ Inspired by [That's You!](https://en.wikipedia.org/wiki/That%27s_You!) by Wish S
 
 1. Open Quem Diria? on the TV.
 2. Each player scans the QR code with their phone's camera, or opens the address under it.
-   Everyone needs to be on the TV's Wi-Fi.
+   Everyone needs to be on the TV's Wi-Fi: the room can show its name and password, with a QR code to join it
+   (see below).
 3. Type a name and tap the circle to take a selfie (optional: without one, the TV shows your initial).
 4. With 3 to 8 players in, pick **Start the game** with the remote. Left and right also reach **Settings**:
    **Mode** (family / adults), **Narrator** (on / off) and **Spotlight** (none / moderate / all); the TV
@@ -81,6 +82,11 @@ Photos can be kept out by person and year in `private/photo-rules.json`, which s
 by the build when it's there: `{"<name in Google Photos>": [2012, "2014-2016"]}`, or `[]` for every photo of
 someone. A photo is kept out when it's one of that person's, taken in one of those years (others in it aside).
 If the file can't be read, no photos are used at all.
+
+The room shows the TV's Wi-Fi when `private/wifi.json` is there (`{"name": "...", "password": "..."}`), also
+kept out of git and bundled by the build: Android doesn't let apps read a saved Wi-Fi password. Show the network
+the TV is on: phones on a guest network usually can't reach the TV. Builds without the file (such as CI's) show
+only the game's QR code.
 
 ## Questions
 

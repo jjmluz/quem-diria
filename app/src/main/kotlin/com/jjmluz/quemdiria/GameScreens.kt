@@ -527,7 +527,7 @@ fun PauseOverlay(button: PauseButton, invite: Invite?) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.width(300.dp)) {
-                JoinCard(invite, caption = stringResource(R.string.scan_to_return), hint = false)
+                JoinCard(invite, caption = stringResource(R.string.scan_to_return))
             }
             Column(Modifier.width(380.dp)) {
                 Text(stringResource(R.string.paused), 56.sp, weight = FontWeight.Black)

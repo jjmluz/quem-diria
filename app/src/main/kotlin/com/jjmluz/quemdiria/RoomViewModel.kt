@@ -35,7 +35,10 @@ data class Invite(val host: String) {
 }
 
 /** The lobby's buttons along the bottom, picked with left and right. PHOTOS shows only with Photos TV installed. */
-enum class LobbyButton { MODE, NARRATOR, PHOTOS, START }
+enum class LobbyButton { SETTINGS, PHOTOS, START }
+
+/** The settings screen's rows, top to bottom: up and down pick one, left and right change it. */
+enum class Setting { MODE, NARRATOR, SPOTLIGHT }
 
 /**
  * The screen that links players to people in Google Photos, over the lobby. First a player is picked
@@ -90,6 +93,16 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _narrator = MutableStateFlow(prefs.getBoolean("narrator", true))
     val narratorOn: StateFlow<Boolean> = _narrator.asStateFlow()
+
+    private val _spotlights = MutableStateFlow(
+        Spotlights.entries.firstOrNull { it.name == prefs.getString("spotlights", null) } ?: Spotlights.MODERATE,
+    )
+    /** Who gets a spotlight turn in the next game. */
+    val spotlights: StateFlow<Spotlights> = _spotlights.asStateFlow()
+
+    private val _settings = MutableStateFlow<Setting?>(null)
+    /** The settings screen, over the lobby: the lit row, or null when it's closed. */
+    val settings: StateFlow<Setting?> = _settings.asStateFlow()
 
     private val _paused = MutableStateFlow<PauseButton?>(null)
     /** Back during a game pauses it; null while playing, else the lit button of the pause screen. */
@@ -362,6 +375,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         val ok = keyCode in OK_KEYS
         val back = keyCode == KeyEvent.KEYCODE_BACK
         if (room.phase == Phase.LOBBY && _linking.value != null) return onLinkingKey(keyCode, ok, back)
+        if (room.phase == Phase.LOBBY && _settings.value != null) return onSettingsKey(keyCode, ok, back)
         if (room.phase == Phase.LOBBY) {
             if (_gettingPhotos.value) return true
             if (!(ok && _button.value == LobbyButton.START)) robotPresses = 0
@@ -424,19 +438,57 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun press(button: LobbyButton) {
         when (button) {
-            LobbyButton.MODE -> {
-                val next = if (room.value.mode == Mode.FAMILY) Mode.ADULTS else Mode.FAMILY
-                lobby.setMode(next)
-                prefs.edit().putString("mode", next.name).apply()
-            }
-            LobbyButton.NARRATOR -> {
-                _narrator.value = !_narrator.value
-                prefs.edit().putBoolean("narrator", _narrator.value).apply()
-                if (_narrator.value) narrator.say(getApplication<Application>().getString(R.string.narrator_hello))
-            }
+            LobbyButton.SETTINGS -> _settings.value = Setting.MODE
             LobbyButton.PHOTOS -> openLinking()
             LobbyButton.START -> if (room.value.canStart) startGame() else countRobotPress()
         }
+    }
+
+    /**
+     * The settings screen's keys: up and down pick a row, left and right step through its choices (stopping at
+     * the ends, so the lit choice moves the way the arrow points), OK moves on to the next choice and wraps
+     * round, and Back closes it. Each change is kept for the next time the app opens.
+     */
+    private fun onSettingsKey(keyCode: Int, ok: Boolean, back: Boolean): Boolean {
+        val row = _settings.value ?: return false
+        val by = when (keyCode) { KeyEvent.KEYCODE_DPAD_LEFT -> -1; KeyEvent.KEYCODE_DPAD_RIGHT -> 1; else -> 0 }
+        when {
+            back -> _settings.value = null
+            keyCode == KeyEvent.KEYCODE_DPAD_UP -> _settings.value = Setting.entries[(row.ordinal - 1).coerceAtLeast(0)]
+            keyCode == KeyEvent.KEYCODE_DPAD_DOWN -> _settings.value = Setting.entries[(row.ordinal + 1).coerceAtMost(Setting.entries.lastIndex)]
+            by != 0 || ok -> change(row, by, wrap = ok)
+        }
+        return true
+    }
+
+    private fun change(setting: Setting, by: Int, wrap: Boolean) {
+        fun <T> step(all: List<T>, now: T): T {
+            val at = all.indexOf(now)
+            return if (wrap) all[(at + 1) % all.size] else all[(at + by).coerceIn(0, all.lastIndex)]
+        }
+        when (setting) {
+            Setting.MODE -> {
+                val next = step(Mode.entries, room.value.mode)
+                if (next == room.value.mode) return
+                lobby.setMode(next)
+                prefs.edit().putString("mode", next.name).apply()
+            }
+            Setting.NARRATOR -> {
+                // Off first, as on the screen.
+                val next = step(listOf(false, true), _narrator.value)
+                if (next == _narrator.value) return
+                _narrator.value = next
+                prefs.edit().putBoolean("narrator", next).apply()
+                if (next) narrator.say(getApplication<Application>().getString(R.string.narrator_hello)) else narrator.stop()
+            }
+            Setting.SPOTLIGHT -> {
+                val next = step(Spotlights.entries, _spotlights.value)
+                if (next == _spotlights.value) return
+                _spotlights.value = next
+                prefs.edit().putString("spotlights", next.name).apply()
+            }
+        }
+        sounds.play(Sounds.Kind.ANSWER)
     }
 
     private var robotPresses = 0
@@ -688,7 +740,8 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     /** Starts a game, preferring questions this TV hasn't played lately; once all have been, starts over. */
     private fun startGame() {
         if (!room.value.canStart) return
-        if (!room.value.allLinked) {
+        // Without spotlight turns there are no photo questions, so there's nothing to wait for.
+        if (!room.value.allLinked || _spotlights.value == Spotlights.NONE) {
             startGame(emptyMap())
             return
         }
@@ -723,7 +776,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         if (deck.votes.all { it.id in used }) used = emptySet()
         fun ordered(d: Deck) = Deck(fresh(d.votes) { it.id }, fresh(d.spotlights) { it.id }, fresh(d.drawings) { it.id })
         val ordered = if (decks.size == 1) ordered(decks[0]) else ordered(decks[0]).mixedWith(ordered(decks[1]), Deck.ADULTS_SHARE)
-        if (!lobby.start(ordered, System.currentTimeMillis(), random, photoQuestions)) return
+        if (!lobby.start(ordered, System.currentTimeMillis(), random, photoQuestions, _spotlights.value)) return
         loadGamePhotos(lobby.room.value.game!!, lobby.room.value)
         val played = lobby.room.value.game!!.steps.flatMap {
             when (it) {

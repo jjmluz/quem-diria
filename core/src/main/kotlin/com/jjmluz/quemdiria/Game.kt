@@ -21,6 +21,9 @@ sealed interface Step {
     data object FinalIntro : Step
 }
 
+/** Who gets a spotlight turn (and so photo questions): nobody, up to [Game.SPOTLIGHTS] players, or everyone. */
+enum class Spotlights { NONE, MODERATE, ALL }
+
 /** What's happening right now. Stages that take answers end early once everyone connected has answered. */
 enum class Stage {
     VOTE, VOTE_REVEAL, ANSWER, ANSWER_REVEAL, DRAW, PICK, PICK_REVEAL, PHOTO, PHOTO_REVEAL, SCORES, FINAL_INTRO, END
@@ -275,8 +278,12 @@ data class Game(
         const val KNOWN_POINTS = 1
         const val PICK_POINTS = 2
 
-        /** Up to this many players get a spotlight turn, which keeps a game to about 15 minutes. */
+        /** With [Spotlights.MODERATE], up to this many players get a spotlight turn, which keeps a game to about 15 minutes. */
         const val SPOTLIGHTS = 4
+
+        /** With [Spotlights.NONE], the game is this many groups of [NO_SPOTLIGHT_GROUP] questions, each followed by the scores. */
+        const val NO_SPOTLIGHT_GROUPS = 3
+        const val NO_SPOTLIGHT_GROUP = 3
 
         /** Photo questions after each spotlight turn, when everyone is linked to Google Photos. */
         const val PHOTOS_PER_TURN = 2
@@ -289,13 +296,32 @@ data class Game(
          * [photos] are questions about each player's photos. They're played only when every player has a list
          * (every one is linked to Google Photos), up to [PHOTOS_PER_TURN] after each spotlight turn; a player
          * whose list is empty (no usable photos) just has none.
+         *
+         * [spotlights] says who gets a spotlight turn: nobody (then the questions come in groups, with the scores
+         * after each, and there are no photo questions, since those follow a spotlight turn), up to
+         * [SPOTLIGHTS] players at random, or everyone.
          */
-        fun plan(players: List<Int>, deck: Deck, random: Random, photos: Map<Int, List<PhotoQuestion>> = emptyMap()): List<Step> {
+        fun plan(
+            players: List<Int>, deck: Deck, random: Random, photos: Map<Int, List<PhotoQuestion>> = emptyMap(),
+            spotlights: Spotlights = Spotlights.MODERATE,
+        ): List<Step> {
             require(deck.votes.isNotEmpty() && deck.spotlights.isNotEmpty() && deck.drawings.isNotEmpty())
-            val spotlit = players.shuffled(random).take(SPOTLIGHTS)
+            val spotlit = when (spotlights) {
+                Spotlights.NONE -> emptyList()
+                Spotlights.MODERATE -> players.shuffled(random).take(SPOTLIGHTS)
+                Spotlights.ALL -> players.shuffled(random)
+            }
             var v = 0
             fun vote(double: Boolean = false) = Step.Vote(deck.votes[v++ % deck.votes.size], double)
-            val steps = mutableListOf<Step>(vote(), vote(), vote())
+            val steps = mutableListOf<Step>()
+            if (spotlit.isEmpty()) {
+                repeat(NO_SPOTLIGHT_GROUPS) {
+                    repeat(NO_SPOTLIGHT_GROUP) { steps += vote() }
+                    steps += Step.Scores
+                }
+            } else {
+                steps += listOf(vote(), vote(), vote())
+            }
             spotlit.forEachIndexed { i, player ->
                 steps += Step.Spotlight(player, deck.spotlights[i % deck.spotlights.size], deck.drawings[i % deck.drawings.size])
                 if (players.all { it in photos }) {

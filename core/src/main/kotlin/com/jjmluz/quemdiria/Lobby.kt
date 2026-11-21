@@ -167,12 +167,15 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS, private val robotRandom: 
      * are questions about each player's photos, played only if every player has a list (see [Game.plan]).
      */
     @Synchronized
-    fun start(deck: Deck, now: Long, random: Random = Random.Default, photos: Map<Int, List<PhotoQuestion>> = emptyMap()): Boolean {
+    fun start(
+        deck: Deck, now: Long, random: Random = Random.Default, photos: Map<Int, List<PhotoQuestion>> = emptyMap(),
+        spotlights: Spotlights = Spotlights.MODERATE,
+    ): Boolean {
         if (!_room.value.canStart) return false
         val ids = seats.map { it.player.id }
         // Numbered on from the last game: phones keep each drawing they load by its stage's number, so
         // starting again from 0 showed them an earlier game's drawings.
-        game = Game.start(Game.plan(ids, deck, random, photos), now, ids.toSet(), seed = random.nextLong(), serial = lastSerial)
+        game = Game.start(Game.plan(ids, deck, random, photos, spotlights), now, ids.toSet(), seed = random.nextLong(), serial = lastSerial)
         phase = Phase.GAME
         publish()
         return true

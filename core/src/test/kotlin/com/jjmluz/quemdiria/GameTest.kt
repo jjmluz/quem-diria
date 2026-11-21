@@ -69,6 +69,40 @@ class GameTest {
     }
 
     @Test
+    fun withAllSpotlightsEveryPlayerGetsOne() {
+        val steps = Game.plan((1..8).toList(), deck, Random(1), spotlights = Spotlights.ALL)
+        assertEquals((1..8).toList(), steps.filterIsInstance<Step.Spotlight>().map { it.playerId }.sorted())
+        // Three to open, two between each of the eight turns, three in the final.
+        assertEquals(3 + 2 * 7 + 3, steps.count { it is Step.Vote })
+        assertEquals(8, steps.count { it is Step.Scores })
+    }
+
+    @Test
+    fun withNoSpotlightsItIsQuestionsAndScores() {
+        val photos = (1..4).associateWith { id -> listOf(PhotoQuestion("p$id", PhotoQuestion.Kind.YEAR, "?", listOf("a", "b", "c", "d"), 0)) }
+        val steps = Game.plan((1..4).toList(), deck, Random(1), photos, Spotlights.NONE)
+        assertTrue(steps.none { it is Step.Spotlight || it is Step.Photo })
+        assertEquals(
+            List(3) { List(3) { "vote" } + "scores" }.flatten() + "final" + List(3) { "double" },
+            steps.map {
+                when (it) {
+                    is Step.Vote -> if (it.double) "double" else "vote"
+                    Step.Scores -> "scores"
+                    Step.FinalIntro -> "final"
+                    else -> "other"
+                }
+            },
+        )
+        // A game that starts on a group of questions plays through to the end.
+        var g = Game.start(steps, 0, all)
+        var now = 0L
+        while (g.stage != Stage.END) {
+            now += 100_000
+            g = g.tick(now, all, all)!!
+        }
+    }
+
+    @Test
     fun aShortDeckIsReused() {
         val small = deck.copy(votes = deck.votes.take(2))
         val questions = Game.plan(listOf(1, 2, 3), small, Random(1)).filterIsInstance<Step.Vote>().map { it.question.id }

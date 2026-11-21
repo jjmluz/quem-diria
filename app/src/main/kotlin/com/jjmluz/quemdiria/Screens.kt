@@ -80,6 +80,8 @@ fun QuemDiriaApp(viewModel: RoomViewModel) {
     val photosInstalled by viewModel.photosInstalled.collectAsStateWithLifecycle()
     val gettingPhotos by viewModel.gettingPhotos.collectAsStateWithLifecycle()
     val gamePhotos by viewModel.gamePhotos.collectAsStateWithLifecycle()
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val spotlights by viewModel.spotlights.collectAsStateWithLifecycle()
     Box(Modifier.fillMaxSize().background(Background)) {
         val game = room.game
         if (splash) {
@@ -88,8 +90,9 @@ fun QuemDiriaApp(viewModel: RoomViewModel) {
             GameScreen(room, game, gamePhotos)
             paused?.let { PauseOverlay(it, invite) }
         } else {
-            LobbyScreen(room, invite, button, narrator, faces, photosInstalled, gettingPhotos)
+            LobbyScreen(room, invite, button, faces, photosInstalled, gettingPhotos)
             linking?.let { LinkingOverlay(room, it, faces, personNames) }
+            settings?.let { SettingsOverlay(it, room.mode, narrator, spotlights) }
         }
     }
 }
@@ -107,7 +110,7 @@ fun Logo(size: Int) {
 
 @Composable
 private fun LobbyScreen(
-    room: Room, invite: Invite?, button: LobbyButton, narrator: Boolean,
+    room: Room, invite: Invite?, button: LobbyButton,
     faces: Map<String, ImageBitmap>, photosInstalled: Boolean, gettingPhotos: Boolean,
 ) {
     Column(Modifier.fillMaxSize().padding(horizontal = 56.dp, vertical = 28.dp)) {
@@ -127,17 +130,9 @@ private fun LobbyScreen(
             horizontalArrangement = Arrangement.spacedBy(if (photosInstalled) 12.dp else 16.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val mode = stringResource(if (room.mode == Mode.ADULTS) R.string.mode_adults else R.string.mode_family)
-            Pill(focused = button == LobbyButton.MODE) {
-                if (button == LobbyButton.MODE) OkIcon()
-                Label(mode, colour = if (button == LobbyButton.MODE) TextColour else Muted)
-            }
-            Pill(focused = button == LobbyButton.NARRATOR) {
-                if (button == LobbyButton.NARRATOR) OkIcon()
-                Label(
-                    stringResource(if (narrator) R.string.narrator_on else R.string.narrator_off),
-                    colour = if (button == LobbyButton.NARRATOR) TextColour else Muted,
-                )
+            Pill(focused = button == LobbyButton.SETTINGS) {
+                if (button == LobbyButton.SETTINGS) OkIcon()
+                Label(stringResource(R.string.settings), colour = if (button == LobbyButton.SETTINGS) TextColour else Muted)
             }
             if (photosInstalled) {
                 val linked = room.players.count { it.person != null }

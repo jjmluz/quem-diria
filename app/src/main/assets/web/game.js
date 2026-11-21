@@ -40,7 +40,8 @@ Object.assign(STRINGS.pt, {
 });
 
 const PEN_COLOURS = ['#111111', '#FFFFFF', '#FF5C8A', '#FFC83D', '#2EC4B6', '#4D8DFF', '#A974FF', '#7B4B2A'];
-const PEN_SIZES = [6, 16];
+// Fine, medium and thick: the thick one fills in big areas (a beard, a hat) in a 75-second round.
+const PEN_SIZES = [6, 16, 36];
 
 let gameKey = '';
 let deadline = 0;
@@ -324,14 +325,20 @@ class DrawingPad {
           this.width = width;
           sizes.forEach((s) => s.classList.toggle('chosen', s === b));
         },
-      }, el('span', { style: 'width:' + (width / 2 + 4) + 'px;height:' + (width / 2 + 4) + 'px' }));
+      }, el('span', { style: 'width:' + Math.min(width / 2 + 4, 24) + 'px;height:' + Math.min(width / 2 + 4, 24) + 'px' }));
       return b;
     });
     const undo = el('button', {
       type: 'button',
       class: 'undo',
+      'aria-label': T.undo,
+      title: T.undo,
       onclick: () => { this.strokes.pop(); this.redraw(); },
-    }, T.undo);
+    });
+    // A curved arrow turning back, as undo is drawn on most phones.
+    undo.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" ' +
+      'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
     bar.append(...swatches, ...sizes, undo);
     return bar;
   }

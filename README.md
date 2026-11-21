@@ -76,7 +76,7 @@ The game plays without it; the photo rounds are only added when it's set up. Wit
 **Google Photos** button: pick each player with the remote and who they are among the people Google Photos
 recognised (and the family named). The TV asks once whether Quem Diria? may see them. Players are linked again
 by name next time. Photos TV does the talking to Google; this app only asks it for people, photos, places and
-pictures (`GooglePhotos.kt`). Photos are taken at random from each person's newest few hundred, for now.
+pictures (`GooglePhotos.kt`). Photos are taken from each person's newest few hundred, one per day, and the TV remembers the ones it has shown so each game has new ones (photos from days already shown come last).
 
 Photos can be kept out by person and year in `private/photo-rules.json`, which stays out of git and is bundled
 by the build when it's there: `{"<name in Google Photos>": [2012, "2014-2016"]}`, or `[]` for every photo of

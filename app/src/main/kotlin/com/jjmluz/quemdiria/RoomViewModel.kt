@@ -166,8 +166,14 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     /** This game's photo questions' pictures, by photo key, as they arrive. */
     val gamePhotos: StateFlow<Map<String, ImageBitmap>> = _gamePhotos.asStateFlow()
 
-    /** Each linked person's photos to ask about, looked through in the background once they're linked. */
+    /**
+     * Each linked person's photos to ask about, looked through in the background once they're linked, and again
+     * for the next game once one of them has been shown (see [prepare]).
+     */
     private val facts = mutableMapOf<String, Deferred<List<PhotoFacts>>>()
+
+    /** The day each looked-through photo was taken, by its key, to remember the day when the photo is shown. */
+    private val photoDays = mutableMapOf<String, Long>()
 
     private val _askPermission = MutableStateFlow(false)
     /** The activity should ask for [GooglePhotos.PERMISSION]; it answers with [onPermission]. */
@@ -263,6 +269,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
             }
             Stage.PHOTO -> {
                 sounds.play(Sounds.Kind.START)
+                if (step is Step.Photo) room.player(step.playerId)?.person?.let { shown(it, step.question.photo) }
                 if (say && step is Step.Photo) narrator.say(step.question.text.withName(name))
             }
             Stage.DRAW -> {
@@ -670,12 +677,18 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     private var loadingLobbyFaces = false
 
     /**
-     * Starts looking through [person]'s photos, once: a dozen photos (not videos) at random among their newest
-     * few hundred, with each one's year and place.
+     * Starts looking through [person]'s photos: a dozen photos (not videos) among their newest few hundred, each
+     * one's year and place. They're picked one per day, leaving out photos the TV has shown and putting days it
+     * has shown last (see [PhotoPicks]). Done again once one of them has been shown, so each game has new ones.
      */
     private fun prepare(person: String) {
         if (!photos.allowed) return
-        facts[person]?.let { if (!it.isCompleted || it.getCompleted().isNotEmpty()) return }
+        facts[person]?.let {
+            if (!it.isCompleted) return
+            val looked = it.getCompleted()
+            val shown = shownPhotos(person)
+            if (looked.isNotEmpty() && looked.none { f -> f.photo in shown }) return
+        }
         facts[person] = viewModelScope.async {
             try {
                 val rules = photoRules ?: return@async emptyList<PhotoFacts>().also {
@@ -688,9 +701,19 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
                     Log.w(TAG, "Google Photos: no name for $person, so no photos")
                     return@async emptyList()
                 }
-                val items = photos.photos(person, pages = 5)
+                val all = photos.photos(person, pages = 5)
                     .filter { !it.video && (name == null || rules.allows(name, it.year)) }
-                    .shuffled().take(PHOTOS_TO_LOOK_AT)
+                val choice = PhotoPicks.choose(
+                    all.map { PhotoCandidate(it.key, it.day) }, shownPhotos(person), shownDays(person),
+                    count = PHOTOS_TO_LOOK_AT, atLeast = Game.PHOTOS_PER_TURN, random = Random(System.nanoTime()),
+                )
+                if (choice.startOver) {
+                    Log.i(TAG, "Google Photos: every photo of $person has been shown, so starting over")
+                    prefs.edit().remove(SHOWN_PHOTOS + person).remove(SHOWN_DAYS + person).apply()
+                }
+                val picked = choice.photos.map { it.photo }.toSet()
+                val items = all.filter { it.key in picked }
+                items.forEach { photoDays[it.key] = it.day }
                 items.map { item ->
                     async { PhotoFacts(item.key, item.year, runCatching { photos.place(item.key) }.getOrNull()) }
                 }.awaitAll().also { Log.i(TAG, "Google Photos: ${it.size} photos for $person, ${it.count { f -> f.place != null }} with places") }
@@ -699,6 +722,20 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
                 emptyList()
             }
         }
+    }
+
+    private fun shownPhotos(person: String): Set<String> = prefs.getStringSet(SHOWN_PHOTOS + person, emptySet())!!
+
+    private fun shownDays(person: String): Set<Long> =
+        prefs.getStringSet(SHOWN_DAYS + person, emptySet())!!.mapNotNull { it.toLongOrNull() }.toSet()
+
+    /** [photo] of [person] is on screen: it, and its day, wait until their other photos have been shown. */
+    private fun shown(person: String, photo: String) {
+        val edit = prefs.edit().putStringSet(SHOWN_PHOTOS + person, shownPhotos(person) + photo)
+        photoDays[photo]?.let { day ->
+            edit.putStringSet(SHOWN_DAYS + person, shownDays(person).map { it.toString() }.toSet() + day.toString())
+        }
+        edit.apply()
     }
 
     /** True if [person]'s name in Google Photos starts with the player's first name (accents and case aside). */
@@ -817,6 +854,8 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         const val PHOTO_WIDTH = 1600
         const val PHOTO_HEIGHT = 900
         const val PHOTOS_TO_LOOK_AT = 12
+        const val SHOWN_PHOTOS = "photos_shown:"
+        const val SHOWN_DAYS = "photo_days_shown:"
         const val PHOTOS_WAIT_MS = 15_000L
         const val LINK_PLAYER_COLUMNS = 4
         const val LINK_PEOPLE_COLUMNS = 7

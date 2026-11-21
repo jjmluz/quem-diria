@@ -19,6 +19,9 @@ data class PhotosPerson(val key: String, val name: String, val count: Int)
 data class PhotosItem(val key: String, val time: Long, val offset: Long, val video: Boolean) {
     /** The year where it was taken. */
     val year: Int get() = Instant.ofEpochMilli(time + offset).atZone(ZoneOffset.UTC).year
+
+    /** The day where it was taken, as days since 1 January 1970. */
+    val day: Long get() = Math.floorDiv(time + offset, 86_400_000L)
 }
 
 /**

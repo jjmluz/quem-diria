@@ -286,10 +286,55 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
                 if (say) Remark.standings(game, room.players.map { it.id })?.let { narrator.say(words(room, it)) }
             }
             Stage.FINAL_INTRO -> sounds.play(Sounds.Kind.REVEAL)
+            Stage.TIE_INTRO -> {
+                sounds.play(Sounds.Kind.REVEAL)
+                val tied = game.tie?.contenders.orEmpty().mapNotNull { room.player(it)?.name }
+                if (say) narrator.say(getApplication<Application>().getString(R.string.tie_say_intro, joinNames(tied)))
+            }
+            Stage.TIE -> {
+                sounds.play(Sounds.Kind.START)
+                if (say) game.tie?.let { narrator.say(tieQuestion(room, it)) }
+            }
+            Stage.TIE_REVEAL -> {
+                sounds.play(Sounds.Kind.REVEAL)
+                if (say) game.tie?.let { narrator.say(tieResult(room, it)) }
+            }
             Stage.END -> {
                 sounds.play(Sounds.Kind.FANFARE)
                 if (say) Remark.winner(game, room.players.map { it.id })?.let { narrator.say(words(room, it)) }
             }
+        }
+    }
+
+    /** Names as said aloud: "Maya, Daniel and Arjun". */
+    private fun joinNames(names: List<String>): String {
+        val and = getApplication<Application>().getString(R.string.say_and)
+        return if (names.size <= 1) names.joinToString() else names.dropLast(1).joinToString(", ") + " $and " + names.last()
+    }
+
+    /** A tie-breaker question, as the narrator reads it: what the TV shows above the choices. */
+    private fun tieQuestion(room: Room, tie: TieBreak): String {
+        val app = getApplication<Application>()
+        return when (val q = tie.question) {
+            is Memory.Drew -> app.getString(R.string.tie_who_drew)
+            is Memory.Picked -> app.getString(R.string.tie_picked) + " " + q.question
+            is Memory.Answered -> {
+                val name = room.player(q.player)?.name.orEmpty()
+                app.getString(R.string.tie_answered, name) + " " + q.question.text.withName(name)
+            }
+        }
+    }
+
+    /** What the tie-breaker's reveal means, as the TV says it under the guesses. */
+    private fun tieResult(room: Room, tie: TieBreak): String {
+        val app = getApplication<Application>()
+        val right = tie.right.orEmpty()
+        val names = joinNames(right.mapNotNull { room.player(it)?.name })
+        return when {
+            right.size == 1 -> app.getString(R.string.tie_won, names)
+            right.isEmpty() -> app.getString(R.string.tie_nobody)
+            right.size == tie.contenders.size -> app.getString(R.string.tie_still)
+            else -> app.getString(R.string.tie_still_in, names)
         }
     }
 
@@ -788,8 +833,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     /** Starts a game, preferring questions this TV hasn't played lately; once all have been, starts over. */
     private fun startGame() {
         if (!room.value.canStart) return
-        // Without spotlight turns there are no photo questions, so there's nothing to wait for.
-        if (!room.value.allLinked || _spotlights.value == Spotlights.NONE) {
+        if (!room.value.allLinked) {
             startGame(emptyMap())
             return
         }

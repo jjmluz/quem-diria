@@ -43,7 +43,7 @@ Inspired by [That's You!](https://en.wikipedia.org/wiki/That%27s_You!) by Wish S
 - **Votes**: "Who would…?" Everyone votes for a player (themselves included) on their phone. You score 1 point
   for each other player who voted the same way as you.
 - **Spotlight**: one player at a time answers a question about themselves (4 choices) and the others guess.
-  The **Spotlight** setting picks who gets a turn: **None**, **Moderate** (up to four players, at random; the
+  The **Spotlight** setting picks who gets a turn: **Moderate** (up to four players, at random; the
   default) or **All** (everyone, a longer game with many players). A right guess is worth 2; the spotlight player gets 1 for each right guess.
 - **Drawing**: then everyone else draws on the spotlight player's selfie ("{name} as a pirate"), and all vote
   for the best drawing: 2 points per vote. With only two drawings (three players), the two who drew would only
@@ -52,6 +52,11 @@ Inspired by [That's You!](https://en.wikipedia.org/wiki/That%27s_You!) by Wish S
   of that player's photos, shown on the TV: "Where was this photo taken?" or "In what year?". Everyone guesses,
   the player in the photo too, and the photo's own place or date is right: 2 points.
 - **Final round**: three last votes, worth double.
+- **Tie-breaker**: when two or more players share the top score (but not everyone), only they answer
+  questions about the game just played: "Who drew this?" (a drawing from tonight), "Tonight the room picked
+  someone for this. Who was it?" and "What did Sofia answer?" (a spotlight question). Never about their own
+  drawing or answer. Those who get it right stay in; the last one in wins. After five questions, those still in
+  share the win. It changes no scores, only who won.
 - **The end**: the winner, an "award" for each player (the question the room most often picked them for), and
   the best drawings.
 
@@ -63,7 +68,7 @@ Inspired by [That's You!](https://en.wikipedia.org/wiki/That%27s_You!) by Wish S
    (see below).
 3. Type a name and tap the circle to take a selfie (optional: without one, the TV shows your initial).
 4. With 3 to 8 players in, pick **Start the game** with the remote. Left and right also reach **Settings**:
-   **Mode** (family / adults), **Narrator** (on / off) and **Spotlight** (none / moderate / all); the TV
+   **Mode** (family / adults), **Narrator** (on / off) and **Spotlight** (moderate / all); the TV
    remembers them.
 
 During a game, OK skips the wait ("Don't wait") and Back pauses, offering to leave. Language follows the TV,

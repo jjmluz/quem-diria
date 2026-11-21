@@ -19,6 +19,10 @@ Object.assign(STRINGS.en, {
   awardTitle: 'The room thinks it’s you:', votes: '{n} votes', oneVote: '1 vote',
   noAward: 'Nobody picked you all game. A mystery…',
   nextGame: 'Want another? Press OK on the TV.',
+  tieTitle: 'Tie-breaker!', tieYou: 'A tie for first place! Get ready to answer…',
+  tieWatch: 'Tie-breaker between {names}. Look at the TV!',
+  tieWhoDrew: 'Who drew this?', tiePicked: 'Tonight the room picked someone for:', tiePickedWho: 'Who was it?',
+  tieAnswered: 'What did {name} answer?', tieRight: 'Right! ✅', tieWrong: 'Not this time',
 });
 Object.assign(STRINGS.pt, {
   question: 'Pergunta {n} de {of}', doubleRound: 'Final: pontos a dobrar!',
@@ -37,6 +41,10 @@ Object.assign(STRINGS.pt, {
   awardTitle: 'A sala acha que és tu:', votes: '{n} votos', oneVote: '1 voto',
   noAward: 'Ninguém votou em ti o jogo todo. Um mistério…',
   nextGame: 'Outra? Carreguem em OK na TV.',
+  tieTitle: 'Desempate!', tieYou: 'Empate no primeiro lugar! Prepara-te para responder…',
+  tieWatch: 'Desempate entre {names}. Olha para a TV!',
+  tieWhoDrew: 'Quem fez este desenho?', tiePicked: 'Esta noite a sala escolheu alguém para:', tiePickedWho: 'Quem foi?',
+  tieAnswered: 'O que respondeu {name}?', tieRight: 'Certo! ✅', tieWrong: 'Desta vez não',
 });
 
 const PEN_COLOURS = ['#111111', '#FFFFFF', '#FF5C8A', '#FFC83D', '#2EC4B6', '#4D8DFF', '#A974FF', '#7B4B2A'];
@@ -91,7 +99,7 @@ function renderGame(room) {
   if (key === gameKey) { runTimer(); return; }
   const newStage = !gameKey.startsWith(g.serial + '|');
   gameKey = key;
-  if (newStage && ['VOTE', 'ANSWER', 'PHOTO', 'DRAW', 'PICK'].includes(g.stage) && navigator.vibrate) navigator.vibrate(60);
+  if (newStage && ['VOTE', 'ANSWER', 'PHOTO', 'DRAW', 'PICK', 'TIE'].includes(g.stage) && navigator.vibrate) navigator.vibrate(60);
   if (newStage) pad = null;
 
   const me = playerById(room, room.you);
@@ -116,6 +124,7 @@ function renderGame(room) {
     case 'END': renderEnd(room, g, body); break;
     case 'FINAL_INTRO': body.append(el('p', { class: 'big' }, T.finalIntro)); break;
     case 'SCORES': body.append(el('p', { class: 'big' }, T.lookAtTv)); break;
+    case 'TIE_INTRO': case 'TIE': case 'TIE_REVEAL': renderTie(room, g, body); break;
     default: renderReveal(g, body);
   }
 }
@@ -407,6 +416,63 @@ function renderPick(room, g, body) {
     }, img, el('span', { class: 'tag' }, own ? T.yours : String(i + 1)));
     grid.append(button);
   });
+  body.append(grid);
+}
+
+/**
+ * The tie-breaker: the tied players answer a question about tonight's game; everyone else watches the TV.
+ * The answer is a player ("who drew this?", "who did the room pick?") or one of four options ("what did they answer?").
+ */
+function renderTie(room, g, body) {
+  const t = g.tie;
+  const names = t.contenders.map((id) => (playerById(room, id) || {}).name).filter(Boolean).join(' & ');
+  if (!t.contenders.includes(room.you)) {
+    body.append(el('p', { class: 'kicker' }, T.tieTitle), el('p', { class: 'big' }, fill(T.tieWatch, { names })));
+    return;
+  }
+  if (g.stage === 'TIE_INTRO') { body.append(el('p', { class: 'big' }, T.tieYou)); return; }
+  if (g.stage === 'TIE_REVEAL') {
+    const right = t.right.includes(room.you);
+    body.append(el('p', { class: 'big' }, right ? T.tieRight : T.tieWrong), el('p', { class: 'hint' }, T.lookAtTv));
+    return;
+  }
+  body.append(el('p', { class: 'kicker' }, T.tieTitle));
+  const pickOne = (list, button, value) => {
+    list.querySelectorAll('.choice').forEach((b) => b.classList.remove('chosen'));
+    button.classList.add('chosen');
+    act('/api/guess', new URLSearchParams({ value }));
+  };
+  if (t.kind === 'answered') {
+    const who = playerById(room, t.player);
+    body.append(el('p', { class: 'kicker' }, fill(T.tieAnswered, { name: who ? who.name : '' })), el('h2', { class: 'question' }, t.question));
+    const list = el('div', { class: 'choices' });
+    t.options.forEach((text, i) => {
+      const button = el('button', {
+        type: 'button', class: 'choice option' + (g.answered === i ? ' chosen' : ''),
+        onclick: () => pickOne(list, button, i),
+      }, el('b', {}, 'ABCD'[i]), el('span', {}, text));
+      list.append(button);
+    });
+    body.append(list);
+    return;
+  }
+  if (t.kind === 'drew') {
+    body.append(
+      el('h2', { class: 'question' }, T.tieWhoDrew),
+      el('img', { class: 'tie-drawing', src: '/tie-drawing?t=' + encodeURIComponent(token) + '&s=' + g.serial, alt: t.question }));
+  } else {
+    body.append(el('p', { class: 'kicker' }, T.tiePicked), el('h2', { class: 'question' }, t.question), el('p', { class: 'hint' }, T.tiePickedWho));
+  }
+  const grid = el('div', { class: 'choices players-choice' });
+  for (const id of t.choices) {
+    const p = playerById(room, id);
+    if (!p) continue;
+    const button = el('button', {
+      type: 'button', class: 'choice' + (g.answered === id ? ' chosen' : ''),
+      onclick: () => pickOne(grid, button, id),
+    }, face(p), el('span', {}, p.name));
+    grid.append(button);
+  }
   body.append(grid);
 }
 

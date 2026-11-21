@@ -46,13 +46,9 @@ fun SettingsOverlay(focused: Setting, mode: Mode, narrator: Boolean, spotlights:
             )
             SettingRow(
                 stringResource(R.string.setting_spotlight), focused == Setting.SPOTLIGHT,
-                listOf(
-                    stringResource(R.string.spotlight_none), stringResource(R.string.spotlight_moderate),
-                    stringResource(R.string.spotlight_all),
-                ),
+                listOf(stringResource(R.string.spotlight_moderate), stringResource(R.string.spotlight_all)),
                 spotlights.ordinal,
                 stringResource(when (spotlights) {
-                    Spotlights.NONE -> R.string.spotlight_none_about
                     Spotlights.MODERATE -> R.string.spotlight_moderate_about
                     Spotlights.ALL -> R.string.spotlight_all_about
                 }),

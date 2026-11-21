@@ -26,10 +26,8 @@
     <string name="narrator_on_about">Lê as perguntas em voz alta.</string>
     <string name="narrator_off_about">Só a música e os sons.</string>
     <string name="setting_spotlight">Em destaque</string>
-    <string name="spotlight_none">Nenhum</string>
     <string name="spotlight_moderate">Moderado</string>
     <string name="spotlight_all">Todos</string>
-    <string name="spotlight_none_about">Só perguntas sobre todos: um jogo mais rápido, sem desenhos nem fotos.</string>
     <string name="spotlight_moderate_about">Até quatro pessoas, à sorte, têm a sua vez em destaque.</string>
     <string name="spotlight_all_about">Toda a gente tem a sua vez em destaque: um jogo mais longo com muitas pessoas.</string>
     <string name="narrator_hello">Olá! Eu leio as perguntas.</string>
@@ -51,6 +49,20 @@
         <item quantity="other">%d votos</item>
     </plurals>
     <string name="scores">Pontuação</string>
+    <string name="tie_title">Desempate!</string>
+    <string name="tie_subtitle">%1$s: quem se lembra melhor desta noite?</string>
+    <string name="tie_header">Desempate · pergunta %1$d</string>
+    <string name="tie_who_drew">Quem fez este desenho?</string>
+    <string name="tie_picked">Esta noite a sala escolheu alguém para isto. Quem foi?</string>
+    <string name="tie_answered">O que respondeu %1$s?</string>
+    <string name="tie_only">Só %1$s respondem, nos telemóveis</string>
+    <string name="tie_drawn_by">Desenho de %1$s</string>
+    <string name="tie_room_picked">A sala escolheu %1$s</string>
+    <string name="tie_won">%1$s ganha o desempate!</string>
+    <string name="tie_still">Continua o empate!</string>
+    <string name="tie_nobody">Ninguém acertou: continua o empate!</string>
+    <string name="tie_still_in">Continuam em jogo: %1$s</string>
+    <string name="tie_say_intro">Há um empate entre %1$s! Desempate: quem se lembra melhor desta noite?</string>
     <string name="final_title">Ronda final</string>
     <string name="final_subtitle">Os pontos contam a dobrar!</string>
     <string name="winner">%s ganha!</string>

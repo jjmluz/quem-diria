@@ -243,6 +243,7 @@ form button[type=submit]:disabled { opacity: 0.5; }
 }
 .icon-tool.chosen { outline: 3px solid var(--accent); }
 .undo { margin-left: auto; }
+.tie-drawing { display: block; width: 70%; aspect-ratio: 1; margin: 0 auto 12px; border-radius: 16px; object-fit: cover; background: var(--card); }
 .primary {
   display: block; width: 100%; padding: 14px; font-size: 20px; font-weight: 700;
   color: #170F2B; background: var(--accent); border: 0; border-radius: 14px;

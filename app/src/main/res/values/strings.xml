@@ -32,10 +32,8 @@
     <string name="narrator_on_about">Reads the questions aloud.</string>
     <string name="narrator_off_about">Just the music and sounds.</string>
     <string name="setting_spotlight">Spotlight</string>
-    <string name="spotlight_none">None</string>
     <string name="spotlight_moderate">Moderate</string>
     <string name="spotlight_all">All</string>
-    <string name="spotlight_none_about">Only questions about everyone: a quicker game, with no drawing or photos.</string>
     <string name="spotlight_moderate_about">Up to four players, picked at random, get a spotlight turn.</string>
     <string name="spotlight_all_about">Every player gets a spotlight turn: a longer game with many players.</string>
     <string name="narrator_hello">Hello! I\'ll read the questions.</string>
@@ -57,6 +55,20 @@
         <item quantity="other">%d votes</item>
     </plurals>
     <string name="scores">Scores</string>
+    <string name="tie_title">Tie-breaker!</string>
+    <string name="tie_subtitle">%1$s: who remembers tonight best?</string>
+    <string name="tie_header">Tie-breaker · question %1$d</string>
+    <string name="tie_who_drew">Who drew this?</string>
+    <string name="tie_picked">Tonight the room picked someone for this. Who was it?</string>
+    <string name="tie_answered">What did %1$s answer?</string>
+    <string name="tie_only">Only %1$s answer, on their phones</string>
+    <string name="tie_drawn_by">Drawn by %1$s</string>
+    <string name="tie_room_picked">The room picked %1$s</string>
+    <string name="tie_won">%1$s wins the tie-breaker!</string>
+    <string name="tie_still">Still tied!</string>
+    <string name="tie_nobody">Nobody got it: still tied!</string>
+    <string name="tie_still_in">Still in: %1$s</string>
+    <string name="tie_say_intro">It\'s a tie between %1$s! Tie-breaker: who remembers tonight best?</string>
     <string name="final_title">Final round</string>
     <string name="final_subtitle">Points count double!</string>
     <string name="winner">%s wins!</string>

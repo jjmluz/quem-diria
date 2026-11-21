@@ -199,6 +199,9 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS, private val robotRandom: 
     fun draw(token: String, jpeg: ByteArray): Boolean = act(token) { g, id -> g.draw(id, jpeg, present()) }
 
     @Synchronized
+    fun guess(token: String, value: Int): Boolean = act(token) { g, id -> g.guess(id, value, present()) }
+
+    @Synchronized
     fun pick(token: String, drawer: Int): Boolean = act(token) { g, id -> g.pick(id, drawer, present()) }
 
     /** Called often by the TV: moves the game on when time is up or everyone has answered. */
@@ -261,6 +264,14 @@ class Lobby(private val maxPlayers: Int = MAX_PLAYERS, private val robotRandom: 
                 Stage.PICK -> {
                     val others = game.drawings.keys - id
                     if (id in game.picks || !game.picksDrawing(id)) null else game.pick(id, others.random(robotRandom), present)
+                }
+                Stage.TIE -> {
+                    val t = game.tie
+                    when {
+                        t == null || id !in t.contenders || id in game.answers -> null
+                        t.question is Memory.Answered -> game.guess(id, robotRandom.nextInt(4), present)
+                        else -> t.choices(present).randomOrNull(robotRandom)?.let { game.guess(id, it, present) }
+                    }
                 }
                 else -> null
             } ?: game

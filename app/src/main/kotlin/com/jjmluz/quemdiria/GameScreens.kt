@@ -80,6 +80,9 @@ fun GameScreen(room: Room, game: Game, photos: Map<String, androidx.compose.ui.g
                 Stage.PHOTO_REVEAL -> PhotoScreen(room, g, photos, reveal = true)
                 Stage.SCORES -> ScoresScreen(room, g)
                 Stage.FINAL_INTRO -> FinalIntro()
+                Stage.TIE_INTRO -> TieIntro(room, g)
+                Stage.TIE -> TieScreen(room, g, reveal = false)
+                Stage.TIE_REVEAL -> TieScreen(room, g, reveal = true)
                 Stage.END -> EndScreen(room, g)
             }
         }
@@ -90,7 +93,7 @@ fun GameScreen(room: Room, game: Game, photos: Map<String, androidx.compose.ui.g
 @Composable
 private fun TimerRing(game: Game, total: Long, size: Dp = 64.dp) {
     // Reveals just pause before moving on; a countdown there would only distract.
-    if (game.deadline == 0L || game.stage !in setOf(Stage.VOTE, Stage.ANSWER, Stage.PHOTO, Stage.DRAW, Stage.PICK)) return
+    if (game.deadline == 0L || game.stage !in setOf(Stage.VOTE, Stage.ANSWER, Stage.PHOTO, Stage.DRAW, Stage.PICK, Stage.TIE)) return
     val now by produceState(System.currentTimeMillis(), game.serial, game.deadline) {
         while (true) {
             value = System.currentTimeMillis()
@@ -465,7 +468,9 @@ private fun EndScreen(room: Room, game: Game) {
 /** Every player, best first, with their score and award: one column up to 4 players, two beyond. */
 @Composable
 private fun AwardGrid(room: Room, game: Game, awards: Map<Int, Award>, modifier: Modifier) {
-    val ranked = room.players.sortedByDescending { game.scores[it.id] ?: 0 }
+    val ids = room.players.map { it.id }
+    // By place, so a tie-breaker's winner comes before the player they beat on the same score.
+    val ranked = room.players.sortedBy { game.rank(it.id, ids) }
     val columns = if (ranked.size > 4) 2 else 1
     val rows = (ranked.size + columns - 1) / columns
     // Fill down the first column, then the second, so the ranking reads top to bottom.

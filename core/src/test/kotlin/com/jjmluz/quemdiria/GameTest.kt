@@ -69,6 +69,15 @@ class GameTest {
     }
 
     @Test
+    fun withAllSpotlightsEveryPlayerGetsOne() {
+        val steps = Game.plan((1..8).toList(), deck, Random(1), spotlights = Spotlights.ALL)
+        assertEquals((1..8).toList(), steps.filterIsInstance<Step.Spotlight>().map { it.playerId }.sorted())
+        // Three to open, two between each of the eight turns, three in the final.
+        assertEquals(3 + 2 * 7 + 3, steps.count { it is Step.Vote })
+        assertEquals(8, steps.count { it is Step.Scores })
+    }
+
+    @Test
     fun aShortDeckIsReused() {
         val small = deck.copy(votes = deck.votes.take(2))
         val questions = Game.plan(listOf(1, 2, 3), small, Random(1)).filterIsInstance<Step.Vote>().map { it.question.id }
@@ -221,14 +230,120 @@ class GameTest {
     fun theGameEndsWithAwardsAndWinners() {
         var g = Game.start(listOf(Step.Vote(Item("a", "Who sings?")), Step.Vote(Item("b", "Who dances?"))), 0, all)
         g = g.vote(1, 2, all)!!.vote(2, 2, all)!!.vote(3, 4, all)!!.skip(0, all)!!.skip(0, all)!!
-        g = g.vote(1, 3, all)!!.vote(2, 3, all)!!.vote(3, 3, all)!!.skip(0, all)!!.skip(0, all)!!
-        assertEquals(Stage.END, g.stage)
+        g = g.vote(1, 3, all)!!.vote(2, 3, all)!!.vote(3, 3, all)!!.skip(0, all)!!
+        // 1 and 2 are tied for first: a tie-breaker comes before the end.
+        assertEquals(listOf(1, 2), g.winners(listOf(1, 2, 3, 4)))
+        g = g.skip(0, all)!!
+        assertEquals(Stage.TIE_INTRO, g.stage)
+        while (g.stage != Stage.END) g = g.skip(0, all)!!
         assertNull(g.skip(0, all))
         val awards = g.awards(listOf(1, 2, 3, 4)).associateBy { it.playerId }
         assertEquals(Award(2, "Who sings?", 2), awards[2])
         assertEquals(Award(3, "Who dances?", 3), awards[3])
         assertEquals(Award(1, null, 0), awards[1])
+        // Nobody answered the tie-breaker: still a draw.
         assertEquals(listOf(1, 2), g.winners(listOf(1, 2, 3, 4)))
+    }
+
+    private val five = setOf(1, 2, 3, 4, 5)
+    private val item = SpotlightItem("s", "{name}'s pet?", listOf("cat", "dog", "fish", "none"))
+
+    /** The last step of a game where 1 and 2 are tied for first, with [memories] of what happened. */
+    private fun tiedGame(memories: List<Memory>, scores: Map<Int, Int> = mapOf(1 to 5, 2 to 5, 3 to 2, 4 to 1, 5 to 0)) =
+        Game.start(listOf(Step.Scores), 0, five).copy(scores = scores, memories = memories)
+
+    @Test
+    fun aTieIsSettledByQuestionsAboutTheGame() {
+        val memories = listOf(
+            Memory.Drew(Drawing(3, 4, "Draw {name}", jpeg, 1)),
+            Memory.Picked("Who sings?", 4),
+            Memory.Answered(3, item, 2),
+            // A tied player's own drawing and own answer: never asked.
+            Memory.Drew(Drawing(1, 4, "Draw {name}", jpeg, 0)),
+            Memory.Answered(1, item, 0),
+        )
+        var g = tiedGame(memories).skip(1, five)!!
+        assertEquals(Stage.TIE_INTRO, g.stage)
+        val tie = g.tie!!
+        assertEquals(listOf(1, 2), tie.contenders)
+        // A drawing first, then the other kinds; nothing about the tied players' own.
+        assertEquals(3, (tie.question as Memory.Drew).drawing.drawerId)
+        assertEquals(2, tie.later.size)
+        assertTrue(tie.later.none { it is Memory.Answered && it.player == 1 })
+        // Not the tied players (it isn't theirs) nor the player drawn on.
+        assertEquals(listOf(3, 5), tie.choices(listOf(1, 2, 3, 4, 5)))
+
+        g = g.skip(2, five)!!
+        assertEquals(Stage.TIE, g.stage)
+        assertNull(g.guess(3, 3, five), "only the tied players answer")
+        assertNull(g.guess(1, 4, five), "not one of the choices")
+        g = g.guess(1, 3, five)!!.guess(2, 5, five)!!
+        g = g.tick(3, five, five)!!
+        assertEquals(Stage.TIE_REVEAL, g.stage)
+        assertEquals(listOf(1), g.tie!!.right)
+        g = g.skip(4, five)!!
+        assertEquals(Stage.END, g.stage)
+        val players = five.toList()
+        assertEquals(listOf(1), g.winners(players))
+        assertEquals(1, g.rank(1, players))
+        assertEquals(2, g.rank(2, players))
+        // The scores don't change: the tie-breaker only decides who won.
+        assertEquals(5, g.scores[1])
+        assertEquals(5, g.scores[2])
+    }
+
+    @Test
+    fun whenNobodyGetsItRightBothStayIn() {
+        val memories = listOf(Memory.Picked("Who sings?", 4), Memory.Answered(3, item, 2))
+        var g = tiedGame(memories).skip(1, five)!!.skip(2, five)!!
+        val first = g.tie!!.question
+        val wrong = if (first is Memory.Answered) 0 else 5
+        g = g.guess(1, wrong, five)!!.guess(2, wrong, five)!!.tick(3, five, five)!!
+        assertEquals(emptyList(), g.tie!!.right)
+        assertEquals(listOf(1, 2), g.tie!!.still)
+        g = g.skip(4, five)!!
+        assertEquals(Stage.TIE, g.stage)
+        assertEquals(2, g.tie!!.round)
+        // Both right this time: still tied, and out of questions, so the win is shared.
+        val truth = g.tie!!.truth
+        g = g.guess(1, truth, five)!!.guess(2, truth, five)!!.tick(5, five, five)!!.skip(6, five)!!
+        assertEquals(Stage.END, g.stage)
+        assertEquals(listOf(1, 2), g.winners(five.toList()))
+        assertEquals(1, g.rank(2, five.toList()))
+    }
+
+    @Test
+    fun anAnswerQuestionTakesOneOfItsFourOptions() {
+        var g = tiedGame(listOf(Memory.Answered(3, item, 2))).skip(1, five)!!.skip(2, five)!!
+        assertTrue(g.tie!!.question is Memory.Answered)
+        assertNull(g.guess(1, 4, five))
+        g = g.guess(1, 2, five)!!.guess(2, 1, five)!!.tick(3, five, five)!!
+        assertEquals(listOf(1), g.tie!!.right)
+    }
+
+    @Test
+    fun noTieBreakerWithoutATieOrSomethingToAsk() {
+        val memories = listOf(Memory.Picked("Who sings?", 4))
+        // One winner.
+        assertEquals(Stage.END, tiedGame(memories, mapOf(1 to 5, 2 to 4)).skip(1, five)!!.stage)
+        // Everyone tied (nobody scored): there's nobody to beat.
+        assertEquals(Stage.END, tiedGame(memories, emptyMap()).skip(1, five)!!.stage)
+        // Nothing fair to ask.
+        assertEquals(Stage.END, tiedGame(listOf(Memory.Answered(1, item, 0))).skip(1, five)!!.stage)
+    }
+
+    @Test
+    fun theGameRemembersWhatHappened() {
+        // A clear pick is remembered; a split vote isn't.
+        var g = Game.start(listOf(Step.Vote(Item("a", "Who sings?")), Step.Vote(Item("b", "Who dances?")), Step.Scores), 0, all)
+        g = g.vote(1, 2, all)!!.vote(2, 2, all)!!.vote(3, 4, all)!!.skip(0, all)!!.skip(0, all)!!
+        g = g.vote(1, 3, all)!!.vote(2, 4, all)!!.skip(0, all)!!
+        assertEquals(listOf<Memory>(Memory.Picked("Who sings?", 2)), g.memories)
+        // The spotlight's own answer, and every drawing.
+        g = spotlightGame().answer(1, 3, all)!!.skip(0, all)!!.skip(1, all)!!
+        g = g.draw(2, jpeg, all)!!.draw(3, jpeg, all)!!.skip(2, all)!!.skip(3, all)!!
+        assertEquals(Memory.Answered(1, SpotlightItem("s", "{name}?", listOf("a", "b", "c", "d")), 3), g.memories.first())
+        assertEquals(listOf(2, 3), g.memories.filterIsInstance<Memory.Drew>().map { it.drawing.drawerId }.sorted())
     }
 
     @Test

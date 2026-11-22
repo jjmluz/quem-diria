@@ -1,9 +1,11 @@
 package com.jjmluz.quemdiria
 
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -93,6 +95,33 @@ class LobbyTest {
         listOf(SpotlightItem("s1", "{name}?", listOf("a", "b", "c", "d"))),
         listOf(Item("d1", "Draw {name}")),
     )
+
+    @Test
+    fun theLastGamesPicturesStayUntilTheNextGame() {
+        val lobby = Lobby()
+        val players = listOf("Ana", "Rui", "Eva").map { lobby.joined(it) }
+        lobby.start(deck, now = 0)
+        // Play to the end, with drawings: the spotlight's answer, then everyone else draws.
+        var guard = 0
+        while (lobby.room.value.game!!.stage != Stage.END && guard++ < 200) {
+            if (lobby.room.value.game!!.stage == Stage.DRAW) players.forEach { lobby.draw(it.token, byteArrayOf(1)) }
+            lobby.skip(now = 0)
+        }
+        val keepsake = assertNotNull(lobby.room.value.keepsake)
+        assertEquals(lobby.room.value.game!!.gallery.size, keepsake.drawings.size)
+        assertTrue(keepsake.drawings.isNotEmpty())
+        assertNull(keepsake.finalScreen)
+        // The TV's picture of the final screen, for this game only.
+        lobby.keepFinalScreen(keepsake.id + 1, byteArrayOf(9))
+        assertNull(lobby.room.value.keepsake!!.finalScreen)
+        lobby.keepFinalScreen(keepsake.id, byteArrayOf(9))
+        assertContentEquals(byteArrayOf(9), lobby.room.value.keepsake!!.finalScreen)
+        // Still there in the room, gone once the next game starts.
+        lobby.backToLobby()
+        assertNotNull(lobby.room.value.keepsake)
+        lobby.start(deck, now = 0)
+        assertNull(lobby.room.value.keepsake)
+    }
 
     @Test
     fun aNewGameNumbersItsStagesAfterTheLastGame() {

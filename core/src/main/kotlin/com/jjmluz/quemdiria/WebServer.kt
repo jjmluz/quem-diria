@@ -149,12 +149,15 @@ class WebServer(
                     "/api/vote" -> form["target"]?.toIntOrNull()?.let { lobby.vote(token, it) }
                     "/api/answer" -> form["option"]?.toIntOrNull()?.let { lobby.answer(token, it) }
                     "/api/pick" -> form["drawer"]?.toIntOrNull()?.let { lobby.pick(token, it) }
+                    "/api/guess" -> form["value"]?.toIntOrNull()?.let { lobby.guess(token, it) }
                     else -> if (isJpeg(request.body)) lobby.draw(token, request.body) else null
                 }
                 // 409: too late (the stage moved on) or not allowed, such as picking your own drawing.
                 respond(out, if (done == true) 204 else 409, "")
             }
             request.method == "GET" && request.path.startsWith("/drawing/") -> drawing(out, request)
+            request.method == "GET" && request.path == "/tie-drawing" -> tieDrawing(out, request)
+            request.method == "GET" && request.path.startsWith("/keep/") -> keep(out, request)
             request.method == "POST" && request.path == "/api/join" -> join(out, request.form())
             request.method == "POST" && request.path == "/api/name" -> {
                 if (lobby.playerFor(token) == null) return respond(out, 401, "")
@@ -245,6 +248,30 @@ class WebServer(
         val id = request.path.removePrefix("/drawing/").toIntOrNull()
         val jpeg = lobby.room.value.game?.drawings?.get(id) ?: return respond(out, 404, "")
         // The URL carries the stage's serial, so the same address never means another drawing.
+        respond(out, 200, jpeg, "image/jpeg", "Cache-Control: max-age=3600\r\n")
+    }
+
+    /**
+     * The drawing the tie-breaker asks about. Its address names no player (the stage's serial keeps it apart
+     * from other questions' drawings), since who drew it is the question.
+     */
+    private fun tieDrawing(out: OutputStream, request: Request) {
+        if (lobby.playerFor(request.query["t"].orEmpty()) == null) return respond(out, 403, "")
+        val memory = lobby.room.value.game?.tie?.question as? Memory.Drew ?: return respond(out, 404, "")
+        respond(out, 200, memory.drawing.jpeg, "image/jpeg", "Cache-Control: max-age=3600\r\n")
+    }
+
+    /** The last game's pictures, for players to save: `/keep/final` (the final screen) and `/keep/drawing/<n>`. */
+    private fun keep(out: OutputStream, request: Request) {
+        if (lobby.playerFor(request.query["t"].orEmpty()) == null) return respond(out, 403, "")
+        val keepsake = lobby.room.value.keepsake ?: return respond(out, 404, "")
+        val name = request.path.removePrefix("/keep/")
+        val jpeg = when {
+            name == "final" -> keepsake.finalScreen
+            name.startsWith("drawing/") -> name.removePrefix("drawing/").toIntOrNull()?.let { keepsake.drawings.getOrNull(it)?.jpeg }
+            else -> null
+        } ?: return respond(out, 404, "")
+        // The address carries the game's id (`k`), so it never means another game's picture.
         respond(out, 200, jpeg, "image/jpeg", "Cache-Control: max-age=3600\r\n")
     }
 
@@ -350,7 +377,7 @@ class WebServer(
 
     companion object {
         const val DEFAULT_PORT = 8642
-        private val ACTIONS = setOf("/api/vote", "/api/answer", "/api/drawing", "/api/pick")
+        private val ACTIONS = setOf("/api/vote", "/api/answer", "/api/drawing", "/api/pick", "/api/guess")
         const val HEARTBEAT_MS = 15_000L
         private const val MAX_HEAD = 16 * 1024
         private const val MAX_DRAIN = 64 * 1024
@@ -399,6 +426,18 @@ class WebServer(
             }
             append("]")
             room.game?.let { append(",\"game\":"); gameJson(it, room, you, now) }
+            room.keepsake?.let { k ->
+                // Captions for the drawings: what was drawn ("Rui as a pirate") and who drew it.
+                append(",\"keep\":{\"id\":").append(k.id).append(",\"final\":").append(k.finalScreen != null)
+                append(",\"drawings\":[")
+                k.drawings.forEachIndexed { i, d ->
+                    if (i > 0) append(',')
+                    val drawn = room.player(d.spotlightId)?.name.orEmpty()
+                    append("{\"prompt\":").append(jsonString(d.prompt.withName(drawn)))
+                    append(",\"by\":").append(jsonString(room.player(d.drawerId)?.name.orEmpty())).append('}')
+                }
+                append("]}")
+            }
             append("}")
         }
 
@@ -438,7 +477,8 @@ class WebServer(
             append(",\"gained\":").append(game.gained[you] ?: 0)
             val score = game.scores[you] ?: 0
             append(",\"score\":").append(score)
-            append(",\"rank\":").append(1 + room.players.count { (game.scores[it.id] ?: 0) > score })
+            append(",\"rank\":").append(game.rank(you, room.players.map { it.id }))
+            game.tie?.let { if (game.stage != Stage.END) tieJson(it, game, room) }
             if (game.stage == Stage.END) {
                 val ids = room.players.map { it.id }
                 game.awards(ids).firstOrNull { it.playerId == you }?.let {
@@ -446,6 +486,35 @@ class WebServer(
                     append(",\"votes\":").append(it.votes).append('}')
                 }
                 append(",\"winners\":[").append(game.winners(ids).joinToString(",")).append(']')
+            }
+            append('}')
+        }
+
+        /**
+         * The tie-breaker for the phones: who's tied, the kind of question ("drew", "picked" or "answered") and
+         * its words, and the players (`choices`) or `options` to pick from. At the reveal, `truth` and `right`.
+         */
+        private fun StringBuilder.tieJson(t: TieBreak, game: Game, room: Room) {
+            val present = room.players.map { it.id }
+            append(",\"tie\":{\"contenders\":[").append(t.contenders.joinToString(",")).append(']')
+            append(",\"round\":").append(t.round)
+            when (val q = t.question) {
+                is Memory.Drew -> {
+                    val name = room.player(q.drawing.spotlightId)?.name.orEmpty()
+                    append(",\"kind\":\"drew\",\"question\":").append(jsonString(q.drawing.prompt.withName(name)))
+                }
+                is Memory.Picked -> append(",\"kind\":\"picked\",\"question\":").append(jsonString(q.question))
+                is Memory.Answered -> {
+                    val name = room.player(q.player)?.name.orEmpty()
+                    append(",\"kind\":\"answered\",\"player\":").append(q.player)
+                    append(",\"question\":").append(jsonString(q.question.text.withName(name)))
+                    append(",\"options\":[").append(q.question.options.joinToString(",") { jsonString(it) }).append(']')
+                }
+            }
+            append(",\"choices\":[").append(t.choices(present).joinToString(",")).append(']')
+            if (game.stage == Stage.TIE_REVEAL) {
+                append(",\"truth\":").append(t.truth)
+                append(",\"right\":[").append(t.right.orEmpty().joinToString(",")).append(']')
             }
             append('}')
         }

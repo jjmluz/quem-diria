@@ -80,16 +80,19 @@ fun QuemDiriaApp(viewModel: RoomViewModel) {
     val photosInstalled by viewModel.photosInstalled.collectAsStateWithLifecycle()
     val gettingPhotos by viewModel.gettingPhotos.collectAsStateWithLifecycle()
     val gamePhotos by viewModel.gamePhotos.collectAsStateWithLifecycle()
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val spotlights by viewModel.spotlights.collectAsStateWithLifecycle()
     Box(Modifier.fillMaxSize().background(Background)) {
         val game = room.game
         if (splash) {
             SplashScreen(onStart = viewModel::onSplashStart, onEnd = viewModel::endSplash)
         } else if (room.phase == Phase.GAME && game != null) {
-            GameScreen(room, game, gamePhotos)
+            GameScreen(room, game, gamePhotos, viewModel::keepFinalScreen)
             paused?.let { PauseOverlay(it, invite) }
         } else {
-            LobbyScreen(room, invite, button, narrator, faces, photosInstalled, gettingPhotos)
+            LobbyScreen(room, invite, viewModel.wifi, button, faces, photosInstalled, gettingPhotos)
             linking?.let { LinkingOverlay(room, it, faces, personNames) }
+            settings?.let { SettingsOverlay(it, room.mode, narrator, spotlights) }
         }
     }
 }
@@ -107,15 +110,20 @@ fun Logo(size: Int) {
 
 @Composable
 private fun LobbyScreen(
-    room: Room, invite: Invite?, button: LobbyButton, narrator: Boolean,
+    room: Room, invite: Invite?, wifi: Wifi?, button: LobbyButton,
     faces: Map<String, ImageBitmap>, photosInstalled: Boolean, gettingPhotos: Boolean,
 ) {
     Column(Modifier.fillMaxSize().padding(horizontal = 56.dp, vertical = 28.dp)) {
         Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(56.dp)) {
             Column(Modifier.width(300.dp)) {
                 Logo(40)
-                Spacer(Modifier.height(16.dp))
-                JoinCard(invite)
+                Spacer(Modifier.height(if (wifi != null) 12.dp else 16.dp))
+                // The game's code smaller, to make room for the Wi-Fi's under it: both must fit above the buttons.
+                JoinCard(invite, qrSize = if (wifi != null) 130.dp else 176.dp)
+                if (wifi != null) {
+                    Spacer(Modifier.height(10.dp))
+                    WifiCard(wifi)
+                }
             }
             Players(room, faces, Modifier.weight(1f))
         }
@@ -127,17 +135,9 @@ private fun LobbyScreen(
             horizontalArrangement = Arrangement.spacedBy(if (photosInstalled) 12.dp else 16.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val mode = stringResource(if (room.mode == Mode.ADULTS) R.string.mode_adults else R.string.mode_family)
-            Pill(focused = button == LobbyButton.MODE) {
-                if (button == LobbyButton.MODE) OkIcon()
-                Label(mode, colour = if (button == LobbyButton.MODE) TextColour else Muted)
-            }
-            Pill(focused = button == LobbyButton.NARRATOR) {
-                if (button == LobbyButton.NARRATOR) OkIcon()
-                Label(
-                    stringResource(if (narrator) R.string.narrator_on else R.string.narrator_off),
-                    colour = if (button == LobbyButton.NARRATOR) TextColour else Muted,
-                )
+            Pill(focused = button == LobbyButton.SETTINGS) {
+                if (button == LobbyButton.SETTINGS) OkIcon()
+                Label(stringResource(R.string.settings), colour = if (button == LobbyButton.SETTINGS) TextColour else Muted)
             }
             if (photosInstalled) {
                 val linked = room.players.count { it.person != null }
@@ -167,10 +167,10 @@ private fun LobbyScreen(
 
 /**
  * The QR code that opens the phone page, with the address to type for a phone that can't scan.
- * [caption] says what scanning it is for; [hint] adds the fix for phones that can't reach the TV.
+ * [caption] says what scanning it is for.
  */
 @Composable
-fun JoinCard(invite: Invite?, caption: String = stringResource(R.string.scan_to_join), hint: Boolean = true) {
+fun JoinCard(invite: Invite?, caption: String = stringResource(R.string.scan_to_join), qrSize: Dp = 176.dp) {
     Column(
         Modifier.fillMaxWidth().background(Card, RoundedCornerShape(20.dp)).padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -183,7 +183,7 @@ fun JoinCard(invite: Invite?, caption: String = stringResource(R.string.scan_to_
             return
         }
         val qr = remember(invite.url) { qrCode(invite.url) }
-        Box(Modifier.size(176.dp).background(Color.White, RoundedCornerShape(12.dp)).padding(12.dp)) {
+        Box(Modifier.size(qrSize).background(Color.White, RoundedCornerShape(12.dp)).padding(12.dp)) {
             Image(qr, null, Modifier.fillMaxSize(), filterQuality = FilterQuality.None)
         }
         Spacer(Modifier.height(14.dp))
@@ -197,15 +197,32 @@ fun JoinCard(invite: Invite?, caption: String = stringResource(R.string.scan_to_
             style = TextStyle(color = Muted, fontSize = 14.sp, textAlign = TextAlign.Center),
         )
     }
-    // Android 17 asks before an app reaches devices at home. If Chrome was refused, the page fails with
-    // ERR_TOO_MANY_RETRIES and the TV never hears from the phone, so the fix can only be shown here.
-    if (!hint) return
-    Spacer(Modifier.height(10.dp))
-    BasicText(
-        stringResource(R.string.local_network_hint),
-        style = TextStyle(color = Muted, fontSize = 12.sp, textAlign = TextAlign.Center),
-        modifier = Modifier.fillMaxWidth(),
-    )
+}
+
+/**
+ * The home Wi-Fi, for guests whose phones aren't on it yet (a phone on another network never reaches the TV):
+ * a small QR code that phone cameras offer to join, and the name and password to type.
+ */
+@Composable
+private fun WifiCard(wifi: Wifi) {
+    Row(
+        Modifier.fillMaxWidth().background(Card, RoundedCornerShape(20.dp)).padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        val qr = remember(wifi) { qrCode(wifi.qrText) }
+        Box(Modifier.size(80.dp).background(Color.White, RoundedCornerShape(8.dp)).padding(5.dp)) {
+            Image(qr, null, Modifier.fillMaxSize(), filterQuality = FilterQuality.None)
+        }
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.wifi_title), 14.sp, Muted, FontWeight.Bold, lines = 1)
+            Text(wifi.name, 18.sp, weight = FontWeight.Bold, lines = 1)
+            Text(
+                if (wifi.password.isEmpty()) stringResource(R.string.wifi_open) else stringResource(R.string.wifi_password, wifi.password),
+                16.sp, lines = 2,
+            )
+        }
+    }
 }
 
 @Composable

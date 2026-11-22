@@ -5,7 +5,8 @@ plugins {
 
 /**
  * Copies the family's own files, kept out of git, into the app's assets under [folder] when they're there:
- * the photo rules (`private/photo-rules.json`: photos kept out of the game). Without them every photo is allowed.
+ * the photo rules (`private/photo-rules.json`: photos kept out of the game; without them every photo is allowed)
+ * and the home Wi-Fi to show in the room (`private/wifi.json`: `name` and `password`; without it, none is shown).
  */
 abstract class CopyIntoAssets : DefaultTask() {
     @get:InputFiles
@@ -57,15 +58,15 @@ val copyMusic = tasks.register<CopyMusic>("copyMusic") {
     custom.from(rootProject.fileTree("music-custom"))
 }
 
-val copyPhotoRules = tasks.register<CopyIntoAssets>("copyPhotoRules") {
-    files.from(rootProject.fileTree("private") { include("photo-rules.json") })
+val copyPrivate = tasks.register<CopyIntoAssets>("copyPrivate") {
+    files.from(rootProject.fileTree("private") { include("photo-rules.json", "wifi.json") })
     folder.set("private")
 }
 
 androidComponents {
     onVariants { variant ->
         variant.sources.assets?.addGeneratedSourceDirectory(copyMusic, CopyMusic::outputDir)
-        variant.sources.assets?.addGeneratedSourceDirectory(copyPhotoRules, CopyIntoAssets::outputDir)
+        variant.sources.assets?.addGeneratedSourceDirectory(copyPrivate, CopyIntoAssets::outputDir)
     }
 }
 

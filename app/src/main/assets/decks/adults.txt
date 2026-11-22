@@ -65,6 +65,11 @@ a057 | Who would start an OnlyFans to pay the bills? | Quem abriria um OnlyFans 
 a058 | Who would cry after one glass of wine? | Quem choraria depois de um copo de vinho?
 a059 | Who would stalk a date's profile back to 2012? | Quem investigaria o perfil de um encontro até 2012?
 a060 | Who would get married first? | Quem casaria primeiro?
+a111 | Who would turn a wine tasting into a piss-up? | Quem transformaria uma prova de vinhos numa grande bebedeira?
+a112 | Who would invent plans to skip a family lunch? | Quem inventaria planos para fugir a um almoço de família?
+a113 | Who would give the Wi-Fi a rude name? | Quem poria um nome malcriado na rede Wi-Fi?
+a114 | Who would reply-all by mistake with a moan about the boss? | Quem responderia a todos, sem querer, com uma queixa do chefe?
+a115 | Who would turn up hungover to a job interview? | Quem iria de ressaca a uma entrevista de emprego?
 # Spicy
 a061 | Who has the highest body count? | Quem tem o "currículo" mais longo na cama?
 a062 | Who would have sex on the first date? | Quem iria para a cama no primeiro encontro?
@@ -116,6 +121,11 @@ a107 | Who would be into role-play? | Quem gostaria de fazer "role-play"?
 a108 | Who would say yes to a naughty weekend away right now? | Quem diria já que sim a um fim de semana escaldante?
 a109 | Who would get handcuffs stuck? | Quem ficaria preso nas algemas?
 a110 | Who would have the steamiest holiday romance? | Quem teria o romance de verão mais escaldante?
+a116 | Who keeps their socks on in bed? | Quem fica de meias na cama?
+a117 | Who would rate their exes out of ten, out loud? | Quem daria notas de zero a dez aos ex, em voz alta?
+a118 | Who would say the wrong name in bed? | Quem diria o nome errado na cama?
+a119 | Who would buy a sex swing and never use it? | Quem compraria um baloiço sexual e nunca o usaria?
+a120 | Who would answer a 4 a.m. booty call and go? | Quem atenderia uma chamada às 4 da manhã e iria logo ter com a pessoa?
 
 [spotlight]
 # Cheeky
@@ -134,6 +144,10 @@ as12 | What would {name} do after winning the lottery? | O que faria {name} depo
 as13 | What does {name} lie about most? | Sobre o que mente {name} mais vezes? | Age / Money / Being "five minutes away" / Having read the book | A idade / O dinheiro / Estar "a cinco minutos" / Ter lido o livro
 as14 | {name}'s hangover cure? | A cura de ressaca de {name}? | A greasy breakfast / Sleep all day / Another drink / Water and regret | Pequeno-almoço gorduroso / Dormir o dia todo / Mais um copo / Água e arrependimento
 as15 | How would {name} react to a surprise proposal in public? | Como reagiria {name} a um pedido de casamento em público? | Yes, crying / Run away / Say "let's talk later" / Pretend it's a joke | Sim, a chorar / Fugir / "Falamos depois" / Fingir que é piada
+as33 | {name}'s karaoke song after midnight? | A canção de karaoke de {name} depois da meia-noite? | A power ballad / A cheesy pop hit / Something in Portuguese / Says no, then won't let go of the mic | Uma balada épica / Um êxito pop foleiro / Algo em português / Diz que não e depois não larga o microfone
+as34 | {name}'s guilty pleasure? | O prazer culpado de {name}? | Reality TV / Fast food at 3 a.m. / Checking up on exes online / Online shopping | Reality shows / Fast food às 3 da manhã / Espreitar os ex nas redes / Compras online
+as35 | {name}'s excuse to leave a party early? | A desculpa de {name} para sair cedo de uma festa? | "The babysitter" / "Early start tomorrow" / "I'm not feeling well" / Leaves without a word | "A babysitter" / "Amanhã acordo cedo" / "Não me sinto bem" / Sai sem dizer nada
+as36 | What does {name} do with a terrible present? | O que faz {name} com uma prenda horrível? | Fakes delight / Gives it to someone else / Takes it back / Says exactly what they think | Finge que adora / Oferece a outra pessoa / Vai trocá-la / Diz exatamente o que pensa
 # Spicy
 as16 | Where's the wildest place {name} would have sex? | O sítio mais louco onde {name} faria sexo? | A beach / A car / A plane / Strictly the bed | Uma praia / Um carro / Um avião / Só na cama
 as17 | What turns {name} on the most? | O que excita mais {name}? | A good laugh / Confidence / A nice smile / Being taken out for dinner | Rir muito / Confiança / Um belo sorriso / Ser levado a jantar
@@ -152,6 +166,10 @@ as29 | Where would {name} hide a sex toy? | Onde esconderia {name} um brinquedo 
 as30 | {name}'s sexiest feature, according to {name}? | A parte mais sexy de {name}, segundo {name}? | Eyes / Smile / Bum / Brain | Os olhos / O sorriso / O rabo / O cérebro
 as31 | How would {name} react to walking in on friends having sex? | Como reagiria {name} ao apanhar amigos a ter sexo? | Scream and run / Say "sorry!" and stay / Join the gossip later / Take notes | Gritar e fugir / "Desculpem!" e ficar / Contar tudo depois / Tomar notas
 as32 | What's {name}'s ideal dirty weekend? | O fim de semana escaldante ideal de {name}? | A hotel with room service / A cabin in the woods / A beach in Ibiza / Home, phones off | Hotel com serviço de quarto / Cabana no bosque / Praia em Ibiza / Em casa, telemóveis desligados
+as37 | {name}'s move to set the mood? | O truque de {name} para criar o clima? | Candles / Music / Wine / Gets straight to the point | Velas / Música / Vinho / Vai direto ao assunto
+as38 | {name} gets a sexy text from a wrong number. Then what? | {name} recebe uma mensagem picante de um número errado. E agora? | Replies, obviously / Blocks it / Shows everyone / Saves it for inspiration | Responde, claro / Bloqueia / Mostra a toda a gente / Guarda para inspiração
+as39 | {name} in bed, in a few words? | {name} na cama, em poucas palavras? | On fire / Pure romance / A nap / Fucking unforgettable | Fogo / Puro romance / Uma sesta / Inesquecível, porra
+as40 | How does {name} say "not tonight"? | Como diz {name} "hoje não"? | "I've got a headache" / Falls asleep on purpose / Puts a film on / Never says it | "Dói-me a cabeça" / Adormece de propósito / Põe um filme / Nunca diz
 
 [draw]
 ad01 | {name} on a disastrous first date | {name} num primeiro encontro desastroso
@@ -189,3 +207,8 @@ ad32 | {name} on a nude modelling job for an art class | {name} a posar nu para 
 ad33 | {name} at a wedding, very drunk | {name} num casamento, com uns copos a mais
 ad34 | {name} in a love triangle | {name} num triângulo amoroso
 ad35 | {name} trying to flirt | {name} a tentar engatar alguém
+ad36 | {name} at a speed-dating night | {name} numa noite de speed dating
+ad37 | {name} as a very sexy pirate | {name} em versão pirata sexy
+ad38 | {name} singing into a hairbrush in their underwear | {name} a cantar para a escova de cabelo, em roupa interior
+ad39 | {name} at the office Christmas party | {name} no jantar de Natal da empresa
+ad40 | {name} on a pub crawl | {name} numa ronda pelos bares

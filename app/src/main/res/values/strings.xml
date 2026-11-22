@@ -3,7 +3,9 @@
     <string name="scan_to_join">Scan with your phone\'s camera to join</string>
     <string name="or_open">or open %1$s</string>
     <string name="no_network">Connect the TV to the Wi-Fi so the phones can join.</string>
-    <string name="local_network_hint">Page won\'t open? Allow Chrome on the local network: Settings › Apps › Chrome › Permissions.</string>
+    <string name="wifi_title">Wi-Fi</string>
+    <string name="wifi_password">Password: %1$s</string>
+    <string name="wifi_open">No password</string>
     <string name="players">Players</string>
     <plurals name="players_missing">
         <item quantity="one">%d more player needed</item>
@@ -11,15 +13,29 @@
     </plurals>
     <string name="start">Start the game</string>
     <string name="back_to_lobby">Back to the room</string>
-    <string name="mode_family">Mode: family</string>
-    <string name="mode_adults">Mode: adults</string>
-    <string name="narrator_on">Narrator: on</string>
-    <string name="narrator_off">Narrator: off</string>
     <!-- Test players added by pressing the "players needed" hint five times; the same names in every language. -->
     <string-array name="robot_names">
         <item>Artur</item>
         <item>Tommy</item>
     </string-array>
+    <string name="settings">Settings</string>
+    <string name="settings_hint">Up and down pick a setting; left and right change it.</string>
+    <string name="setting_change">Change</string>
+    <string name="setting_mode">Mode</string>
+    <string name="mode_family">Family</string>
+    <string name="mode_adults">Adults</string>
+    <string name="mode_family_about">Questions for all ages.</string>
+    <string name="mode_adults_about">Cheeky and spicy questions mixed in.</string>
+    <string name="setting_narrator">Narrator</string>
+    <string name="narrator_on">On</string>
+    <string name="narrator_off">Off</string>
+    <string name="narrator_on_about">Reads the questions aloud.</string>
+    <string name="narrator_off_about">Just the music and sounds.</string>
+    <string name="setting_spotlight">Spotlight</string>
+    <string name="spotlight_moderate">Moderate</string>
+    <string name="spotlight_all">All</string>
+    <string name="spotlight_moderate_about">Up to four players, picked at random, get a spotlight turn.</string>
+    <string name="spotlight_all_about">Every player gets a spotlight turn: a longer game with many players.</string>
     <string name="narrator_hello">Hello! I\'ll read the questions.</string>
     <string name="question_of">Question %1$d of %2$d</string>
     <string name="final_round">Final round · double points</string>
@@ -39,6 +55,20 @@
         <item quantity="other">%d votes</item>
     </plurals>
     <string name="scores">Scores</string>
+    <string name="tie_title">Tie-breaker!</string>
+    <string name="tie_subtitle">%1$s: who remembers tonight best?</string>
+    <string name="tie_header">Tie-breaker · question %1$d</string>
+    <string name="tie_who_drew">Who drew this?</string>
+    <string name="tie_picked">Tonight the room picked someone for this. Who was it?</string>
+    <string name="tie_answered">What did %1$s answer?</string>
+    <string name="tie_only">Only %1$s answer, on their phones</string>
+    <string name="tie_drawn_by">Drawn by %1$s</string>
+    <string name="tie_room_picked">The room picked %1$s</string>
+    <string name="tie_won">%1$s wins the tie-breaker!</string>
+    <string name="tie_still">Still tied!</string>
+    <string name="tie_nobody">Nobody got it: still tied!</string>
+    <string name="tie_still_in">Still in: %1$s</string>
+    <string name="tie_say_intro">It\'s a tie between %1$s! Tie-breaker: who remembers tonight best?</string>
     <string name="final_title">Final round</string>
     <string name="final_subtitle">Points count double!</string>
     <string name="winner">%s wins!</string>

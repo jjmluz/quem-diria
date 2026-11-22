@@ -11,6 +11,8 @@ import android.view.KeyEvent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.toArgb
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -35,7 +37,10 @@ data class Invite(val host: String) {
 }
 
 /** The lobby's buttons along the bottom, picked with left and right. PHOTOS shows only with Photos TV installed. */
-enum class LobbyButton { MODE, NARRATOR, PHOTOS, START }
+enum class LobbyButton { SETTINGS, PHOTOS, START }
+
+/** The settings screen's rows, top to bottom: up and down pick one, left and right change it. */
+enum class Setting { MODE, NARRATOR, SPOTLIGHT }
 
 /**
  * The screen that links players to people in Google Photos, over the lobby. First a player is picked
@@ -91,6 +96,16 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     private val _narrator = MutableStateFlow(prefs.getBoolean("narrator", true))
     val narratorOn: StateFlow<Boolean> = _narrator.asStateFlow()
 
+    private val _spotlights = MutableStateFlow(
+        Spotlights.entries.firstOrNull { it.name == prefs.getString("spotlights", null) } ?: Spotlights.MODERATE,
+    )
+    /** Who gets a spotlight turn in the next game. */
+    val spotlights: StateFlow<Spotlights> = _spotlights.asStateFlow()
+
+    private val _settings = MutableStateFlow<Setting?>(null)
+    /** The settings screen, over the lobby: the lit row, or null when it's closed. */
+    val settings: StateFlow<Setting?> = _settings.asStateFlow()
+
     private val _paused = MutableStateFlow<PauseButton?>(null)
     /** Back during a game pauses it; null while playing, else the lit button of the pause screen. */
     val paused: StateFlow<PauseButton?> = _paused.asStateFlow()
@@ -123,6 +138,17 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         null
     }
 
+    /** The home Wi-Fi to show in the room (`private/wifi.json`, bundled when the build finds it); null without it. */
+    val wifi: Wifi? = try {
+        val json = org.json.JSONObject(app.assets.open(WIFI).bufferedReader().use { it.readText() })
+        Wifi(json.getString("name"), json.optString("password"))
+    } catch (e: java.io.FileNotFoundException) {
+        null
+    } catch (e: Exception) {
+        Log.e(TAG, "Can't read $WIFI", e)
+        null
+    }
+
     private val _faces = MutableStateFlow<Map<String, ImageBitmap>>(emptyMap())
     /** Faces of Google Photos people by their key, loaded as people are listed. */
     val faces: StateFlow<Map<String, ImageBitmap>> = _faces.asStateFlow()
@@ -142,8 +168,14 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     /** This game's photo questions' pictures, by photo key, as they arrive. */
     val gamePhotos: StateFlow<Map<String, ImageBitmap>> = _gamePhotos.asStateFlow()
 
-    /** Each linked person's photos to ask about, looked through in the background once they're linked. */
+    /**
+     * Each linked person's photos to ask about, looked through in the background once they're linked, and again
+     * for the next game once one of them has been shown (see [prepare]).
+     */
     private val facts = mutableMapOf<String, Deferred<List<PhotoFacts>>>()
+
+    /** The day each looked-through photo was taken, by its key, to remember the day when the photo is shown. */
+    private val photoDays = mutableMapOf<String, Long>()
 
     private val _askPermission = MutableStateFlow(false)
     /** The activity should ask for [GooglePhotos.PERMISSION]; it answers with [onPermission]. */
@@ -239,6 +271,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
             }
             Stage.PHOTO -> {
                 sounds.play(Sounds.Kind.START)
+                if (step is Step.Photo) room.player(step.playerId)?.person?.let { shown(it, step.question.photo) }
                 if (say && step is Step.Photo) narrator.say(step.question.text.withName(name))
             }
             Stage.DRAW -> {
@@ -255,10 +288,99 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
                 if (say) Remark.standings(game, room.players.map { it.id })?.let { narrator.say(words(room, it)) }
             }
             Stage.FINAL_INTRO -> sounds.play(Sounds.Kind.REVEAL)
+            Stage.TIE_INTRO -> {
+                sounds.play(Sounds.Kind.REVEAL)
+                val tied = game.tie?.contenders.orEmpty().mapNotNull { room.player(it)?.name }
+                if (say) narrator.say(getApplication<Application>().getString(R.string.tie_say_intro, joinNames(tied)))
+            }
+            Stage.TIE -> {
+                sounds.play(Sounds.Kind.START)
+                if (say) game.tie?.let { narrator.say(tieQuestion(room, it)) }
+            }
+            Stage.TIE_REVEAL -> {
+                sounds.play(Sounds.Kind.REVEAL)
+                if (say) game.tie?.let { narrator.say(tieResult(room, it)) }
+            }
             Stage.END -> {
                 sounds.play(Sounds.Kind.FANFARE)
                 if (say) Remark.winner(game, room.players.map { it.id })?.let { narrator.say(words(room, it)) }
             }
+        }
+    }
+
+    /** Names as said aloud: "Maya, Daniel and Arjun". */
+    private fun joinNames(names: List<String>): String {
+        val and = getApplication<Application>().getString(R.string.say_and)
+        return if (names.size <= 1) names.joinToString() else names.dropLast(1).joinToString(", ") + " $and " + names.last()
+    }
+
+    /** A tie-breaker question, as the narrator reads it: what the TV shows above the choices. */
+    private fun tieQuestion(room: Room, tie: TieBreak): String {
+        val app = getApplication<Application>()
+        return when (val q = tie.question) {
+            is Memory.Drew -> app.getString(R.string.tie_who_drew)
+            is Memory.Picked -> app.getString(R.string.tie_picked) + " " + q.question
+            is Memory.Answered -> {
+                val name = room.player(q.player)?.name.orEmpty()
+                app.getString(R.string.tie_answered, name) + " " + q.question.text.withName(name)
+            }
+        }
+    }
+
+    /** What the tie-breaker's reveal means, as the TV says it under the guesses. */
+    private fun tieResult(room: Room, tie: TieBreak): String {
+        val app = getApplication<Application>()
+        val right = tie.right.orEmpty()
+        val names = joinNames(right.mapNotNull { room.player(it)?.name })
+        return when {
+            right.size == 1 -> app.getString(R.string.tie_won, names)
+            right.isEmpty() -> app.getString(R.string.tie_nobody)
+            right.size == tie.contenders.size -> app.getString(R.string.tie_still)
+            else -> app.getString(R.string.tie_still_in, names)
+        }
+    }
+
+    private var keptFinalScreen = -1
+
+    /**
+     * The end screen of game [id] as drawn on the TV ([image]): framed with a margin, the game's name and the
+     * date below, as a JPEG for the phones to save. Once per game.
+     */
+    fun keepFinalScreen(id: Int, image: ImageBitmap) {
+        if (id == keptFinalScreen) return
+        keptFinalScreen = id
+        viewModelScope.launch(Dispatchers.Default) {
+            val shot = image.asAndroidBitmap().copy(android.graphics.Bitmap.Config.ARGB_8888, false)
+            val margin = shot.width / 24
+            val footer = margin * 2
+            val out = android.graphics.Bitmap.createBitmap(shot.width + 2 * margin, shot.height + margin + footer, android.graphics.Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(out)
+            canvas.drawColor(Background.toArgb())
+            canvas.drawBitmap(shot, margin.toFloat(), margin.toFloat(), null)
+            val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                textSize = footer * 0.4f
+                // The logo's black weight where Android has it (9, Pie); bold before.
+                typeface = if (android.os.Build.VERSION.SDK_INT >= 28) {
+                    android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, 900, false)
+                } else {
+                    android.graphics.Typeface.DEFAULT_BOLD
+                }
+            }
+            val baseline = shot.height + margin + footer * 0.62f
+            paint.color = TextColour.toArgb()
+            canvas.drawText("QUEM DIRIA", margin.toFloat(), baseline, paint)
+            val x = margin + paint.measureText("QUEM DIRIA")
+            paint.color = Accent.toArgb()
+            canvas.drawText("?", x, baseline, paint)
+            val date = java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.LONG)
+                .withLocale(getApplication<Application>().resources.configuration.locales[0])
+                .format(java.time.LocalDate.now())
+            paint.color = Muted.toArgb()
+            paint.typeface = android.graphics.Typeface.DEFAULT
+            paint.textAlign = android.graphics.Paint.Align.RIGHT
+            canvas.drawText(date, (out.width - margin).toFloat(), baseline, paint)
+            val jpeg = java.io.ByteArrayOutputStream().also { out.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }.toByteArray()
+            lobby.keepFinalScreen(id, jpeg)
         }
     }
 
@@ -362,6 +484,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         val ok = keyCode in OK_KEYS
         val back = keyCode == KeyEvent.KEYCODE_BACK
         if (room.phase == Phase.LOBBY && _linking.value != null) return onLinkingKey(keyCode, ok, back)
+        if (room.phase == Phase.LOBBY && _settings.value != null) return onSettingsKey(keyCode, ok, back)
         if (room.phase == Phase.LOBBY) {
             if (_gettingPhotos.value) return true
             if (!(ok && _button.value == LobbyButton.START)) robotPresses = 0
@@ -424,19 +547,57 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun press(button: LobbyButton) {
         when (button) {
-            LobbyButton.MODE -> {
-                val next = if (room.value.mode == Mode.FAMILY) Mode.ADULTS else Mode.FAMILY
-                lobby.setMode(next)
-                prefs.edit().putString("mode", next.name).apply()
-            }
-            LobbyButton.NARRATOR -> {
-                _narrator.value = !_narrator.value
-                prefs.edit().putBoolean("narrator", _narrator.value).apply()
-                if (_narrator.value) narrator.say(getApplication<Application>().getString(R.string.narrator_hello))
-            }
+            LobbyButton.SETTINGS -> _settings.value = Setting.MODE
             LobbyButton.PHOTOS -> openLinking()
             LobbyButton.START -> if (room.value.canStart) startGame() else countRobotPress()
         }
+    }
+
+    /**
+     * The settings screen's keys: up and down pick a row, left and right step through its choices (stopping at
+     * the ends, so the lit choice moves the way the arrow points), OK moves on to the next choice and wraps
+     * round, and Back closes it. Each change is kept for the next time the app opens.
+     */
+    private fun onSettingsKey(keyCode: Int, ok: Boolean, back: Boolean): Boolean {
+        val row = _settings.value ?: return false
+        val by = when (keyCode) { KeyEvent.KEYCODE_DPAD_LEFT -> -1; KeyEvent.KEYCODE_DPAD_RIGHT -> 1; else -> 0 }
+        when {
+            back -> _settings.value = null
+            keyCode == KeyEvent.KEYCODE_DPAD_UP -> _settings.value = Setting.entries[(row.ordinal - 1).coerceAtLeast(0)]
+            keyCode == KeyEvent.KEYCODE_DPAD_DOWN -> _settings.value = Setting.entries[(row.ordinal + 1).coerceAtMost(Setting.entries.lastIndex)]
+            by != 0 || ok -> change(row, by, wrap = ok)
+        }
+        return true
+    }
+
+    private fun change(setting: Setting, by: Int, wrap: Boolean) {
+        fun <T> step(all: List<T>, now: T): T {
+            val at = all.indexOf(now)
+            return if (wrap) all[(at + 1) % all.size] else all[(at + by).coerceIn(0, all.lastIndex)]
+        }
+        when (setting) {
+            Setting.MODE -> {
+                val next = step(Mode.entries, room.value.mode)
+                if (next == room.value.mode) return
+                lobby.setMode(next)
+                prefs.edit().putString("mode", next.name).apply()
+            }
+            Setting.NARRATOR -> {
+                // Off first, as on the screen.
+                val next = step(listOf(false, true), _narrator.value)
+                if (next == _narrator.value) return
+                _narrator.value = next
+                prefs.edit().putBoolean("narrator", next).apply()
+                if (next) narrator.say(getApplication<Application>().getString(R.string.narrator_hello)) else narrator.stop()
+            }
+            Setting.SPOTLIGHT -> {
+                val next = step(Spotlights.entries, _spotlights.value)
+                if (next == _spotlights.value) return
+                _spotlights.value = next
+                prefs.edit().putString("spotlights", next.name).apply()
+            }
+        }
+        sounds.play(Sounds.Kind.ANSWER)
     }
 
     private var robotPresses = 0
@@ -607,12 +768,18 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     private var loadingLobbyFaces = false
 
     /**
-     * Starts looking through [person]'s photos, once: a dozen photos (not videos) at random among their newest
-     * few hundred, with each one's year and place.
+     * Starts looking through [person]'s photos: a dozen photos (not videos) among their newest few hundred, each
+     * one's year and place. They're picked one per day, leaving out photos the TV has shown and putting days it
+     * has shown last (see [PhotoPicks]). Done again once one of them has been shown, so each game has new ones.
      */
     private fun prepare(person: String) {
         if (!photos.allowed) return
-        facts[person]?.let { if (!it.isCompleted || it.getCompleted().isNotEmpty()) return }
+        facts[person]?.let {
+            if (!it.isCompleted) return
+            val looked = it.getCompleted()
+            val shown = shownPhotos(person)
+            if (looked.isNotEmpty() && looked.none { f -> f.photo in shown }) return
+        }
         facts[person] = viewModelScope.async {
             try {
                 val rules = photoRules ?: return@async emptyList<PhotoFacts>().also {
@@ -625,9 +792,19 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
                     Log.w(TAG, "Google Photos: no name for $person, so no photos")
                     return@async emptyList()
                 }
-                val items = photos.photos(person, pages = 5)
+                val all = photos.photos(person, pages = 5)
                     .filter { !it.video && (name == null || rules.allows(name, it.year)) }
-                    .shuffled().take(PHOTOS_TO_LOOK_AT)
+                val choice = PhotoPicks.choose(
+                    all.map { PhotoCandidate(it.key, it.day) }, shownPhotos(person), shownDays(person),
+                    count = PHOTOS_TO_LOOK_AT, atLeast = Game.PHOTOS_PER_TURN, random = Random(System.nanoTime()),
+                )
+                if (choice.startOver) {
+                    Log.i(TAG, "Google Photos: every photo of $person has been shown, so starting over")
+                    prefs.edit().remove(SHOWN_PHOTOS + person).remove(SHOWN_DAYS + person).apply()
+                }
+                val picked = choice.photos.map { it.photo }.toSet()
+                val items = all.filter { it.key in picked }
+                items.forEach { photoDays[it.key] = it.day }
                 items.map { item ->
                     async { PhotoFacts(item.key, item.year, runCatching { photos.place(item.key) }.getOrNull()) }
                 }.awaitAll().also { Log.i(TAG, "Google Photos: ${it.size} photos for $person, ${it.count { f -> f.place != null }} with places") }
@@ -636,6 +813,20 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
                 emptyList()
             }
         }
+    }
+
+    private fun shownPhotos(person: String): Set<String> = prefs.getStringSet(SHOWN_PHOTOS + person, emptySet())!!
+
+    private fun shownDays(person: String): Set<Long> =
+        prefs.getStringSet(SHOWN_DAYS + person, emptySet())!!.mapNotNull { it.toLongOrNull() }.toSet()
+
+    /** [photo] of [person] is on screen: it, and its day, wait until their other photos have been shown. */
+    private fun shown(person: String, photo: String) {
+        val edit = prefs.edit().putStringSet(SHOWN_PHOTOS + person, shownPhotos(person) + photo)
+        photoDays[photo]?.let { day ->
+            edit.putStringSet(SHOWN_DAYS + person, shownDays(person).map { it.toString() }.toSet() + day.toString())
+        }
+        edit.apply()
     }
 
     /** True if [person]'s name in Google Photos starts with the player's first name (accents and case aside). */
@@ -723,7 +914,7 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
         if (deck.votes.all { it.id in used }) used = emptySet()
         fun ordered(d: Deck) = Deck(fresh(d.votes) { it.id }, fresh(d.spotlights) { it.id }, fresh(d.drawings) { it.id })
         val ordered = if (decks.size == 1) ordered(decks[0]) else ordered(decks[0]).mixedWith(ordered(decks[1]), Deck.ADULTS_SHARE)
-        if (!lobby.start(ordered, System.currentTimeMillis(), random, photoQuestions)) return
+        if (!lobby.start(ordered, System.currentTimeMillis(), random, photoQuestions, _spotlights.value)) return
         loadGamePhotos(lobby.room.value.game!!, lobby.room.value)
         val played = lobby.room.value.game!!.steps.flatMap {
             when (it) {
@@ -748,10 +939,13 @@ class RoomViewModel(app: Application) : AndroidViewModel(app) {
     private companion object {
         const val FACE_PX = 160
         const val PHOTO_RULES = "private/photo-rules.json"
+        const val WIFI = "private/wifi.json"
         const val FACE_MAX_AGE_MS = 30L * 24 * 60 * 60 * 1000
         const val PHOTO_WIDTH = 1600
         const val PHOTO_HEIGHT = 900
         const val PHOTOS_TO_LOOK_AT = 12
+        const val SHOWN_PHOTOS = "photos_shown:"
+        const val SHOWN_DAYS = "photo_days_shown:"
         const val PHOTOS_WAIT_MS = 15_000L
         const val LINK_PLAYER_COLUMNS = 4
         const val LINK_PEOPLE_COLUMNS = 7

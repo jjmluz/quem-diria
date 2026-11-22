@@ -322,18 +322,18 @@ class DrawingPad {
     c.drawImage(this.layer, 0, 0);
   }
 
-  /** One stroke on [c]: a dot for a tap, else a line through its points. */
+  /** One stroke on [c]: a dot where the finger landed, and a line through its points. */
   drawStroke(c, stroke) {
     c.strokeStyle = stroke.colour;
     c.fillStyle = stroke.colour;
     c.lineWidth = stroke.width;
     const [first, ...rest] = stroke.points;
-    if (rest.length === 0) {
-      c.beginPath();
-      c.arc(first[0], first[1], stroke.width / 2, 0, Math.PI * 2);
-      c.fill();
-      return;
-    }
+    // The dot is always drawn, not only for a lone point: a tap on a phone also sends moves on the very same
+    // spot, and canvas draws nothing for a line of zero length, so the tap would leave no mark.
+    c.beginPath();
+    c.arc(first[0], first[1], stroke.width / 2, 0, Math.PI * 2);
+    c.fill();
+    if (rest.length === 0) return;
     c.beginPath();
     c.moveTo(first[0], first[1]);
     for (const [x, y] of rest) c.lineTo(x, y);

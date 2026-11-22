@@ -11,7 +11,7 @@ Object.assign(STRINGS.en, {
   guessFor: 'Guess what {name} answered:',
   photoOf: 'A photo of {name}: look at the TV!',
   beingDrawn: 'The others are drawing you… 😬', drawn: 'Sent! Waiting for the others.',
-  draw: 'Draw:', send: 'Send', undo: 'Undo', rubber: 'Rubber', sendFailed: 'That didn’t send. Try again.',
+  draw: 'Draw:', send: 'Send', undo: 'Undo', rubber: 'Rubber', brush: 'Brush size', sendFailed: 'That didn’t send. Try again.',
   pickDrawing: 'Pick the best drawing', yours: 'Yours',
   othersPick: 'Just two drawings: {name} picks the best.',
   scores: 'Scores', finalIntro: 'Final round coming: points count double!',
@@ -37,7 +37,7 @@ Object.assign(STRINGS.pt, {
   guessFor: 'Adivinha o que {name} respondeu:',
   photoOf: 'Uma foto de {name}: olha para a TV!',
   beingDrawn: 'Os outros estão a desenhar-te… 😬', drawn: 'Enviado! À espera dos outros.',
-  draw: 'Desenha:', send: 'Enviar', undo: 'Desfazer', rubber: 'Borracha', sendFailed: 'Não foi enviado. Tenta outra vez.',
+  draw: 'Desenha:', send: 'Enviar', undo: 'Desfazer', rubber: 'Borracha', brush: 'Espessura do traço', sendFailed: 'Não foi enviado. Tenta outra vez.',
   pickDrawing: 'Escolhe o melhor desenho', yours: 'O teu',
   othersPick: 'Só dois desenhos: quem escolhe é {name}.',
   scores: 'Pontuação', finalIntro: 'Vem aí a ronda final: pontos a dobrar!',
@@ -94,6 +94,7 @@ function playerById(room, id) {
 function leaveGame() {
   gameKey = '';
   pad = null;
+  document.body.classList.remove('pad-open');
   cancelAnimationFrame(timerFrame);
 }
 
@@ -111,6 +112,8 @@ function renderGame(room) {
   if (newStage && ['VOTE', 'ANSWER', 'PHOTO', 'DRAW', 'PICK', 'TIE'].includes(g.stage) && navigator.vibrate) navigator.vibrate(60);
   if (newStage) pad = null;
 
+  // The drawing pad needs the whole screen: the logo goes while it's up (see renderDraw).
+  document.body.classList.remove('pad-open');
   const me = playerById(room, room.you);
   const screen = $('game');
   const header = el('div', { class: 'game-head' },
@@ -225,6 +228,7 @@ function renderDraw(room, g, body, spotlight) {
   if (g.spotlight === room.you) { body.append(el('p', { class: 'big' }, T.beingDrawn)); return; }
   if (g.drew) { body.append(el('p', { class: 'big' }, T.drawn)); return; }
   if (!pad) pad = new DrawingPad(spotlight);
+  document.body.classList.add('pad-open');
   const error = el('p', { class: 'error', hidden: '' }, T.sendFailed);
   const send = el('button', {
     type: 'button',
@@ -391,7 +395,12 @@ class DrawingPad {
     undo.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" ' +
       'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
-    bar.append(...swatches, ...sizes, rubber, undo);
+    // Colours on a row of their own, evenly spread; under them the brushes, then the rubber and undo.
+    bar.append(
+      el('div', { class: 'palette' }, ...swatches),
+      el('div', { class: 'tool-row' },
+        el('div', { class: 'seg', role: 'group', 'aria-label': T.brush }, ...sizes),
+        el('div', { class: 'seg' }, rubber, undo)));
     return bar;
   }
 
